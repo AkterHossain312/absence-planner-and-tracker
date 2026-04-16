@@ -2,7 +2,7 @@
   "version": 2,
   "public": false,
   "buildCommand": "npm run build",
-  "outputDirectory": "dist/absence-planner-and-tracker",
+  "outputDirectory": "dist/absence-planner-and-tracker/browser",
   "devCommand": "npm start",
   "installCommand": "npm install",
   "framework": "angular",
