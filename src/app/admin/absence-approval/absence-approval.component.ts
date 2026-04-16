@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AbsenceService } from '../../core/services/absence.service';
 import { NotificationService } from '../../core/services/notification.service';
@@ -16,7 +16,11 @@ export class AbsenceApprovalComponent {
   absences = signal<Absence[]>([]);
   filter = signal<'all' | AbsenceStatus>('all');
 
-  filteredAbsences = signal<Absence[]>([]);
+  filteredAbsences = computed(() => {
+    const f = this.filter();
+    const all = this.absences();
+    return f === 'all' ? all : all.filter(a => a.status === f);
+  });
 
   constructor(
     private absenceService: AbsenceService,
@@ -27,15 +31,7 @@ export class AbsenceApprovalComponent {
   }
 
   loadAbsences(): void {
-    const all = this.absenceService.getAll();
-    this.absences.set(all);
-    this.applyFilter();
-  }
-
-  applyFilter(): void {
-    const f = this.filter();
-    const all = this.absences();
-    this.filteredAbsences.set(f === 'all' ? all : all.filter(a => a.status === f));
+    this.absences.set(this.absenceService.getAll());
   }
 
   updateStatus(absence: Absence, status: AbsenceStatus): void {

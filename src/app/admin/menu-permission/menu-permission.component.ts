@@ -1,7 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PermissionService } from '../../core/services/permission.service';
+import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { MenuPermission } from '../../core/models/permission.model';
 import { UserRole } from '../../core/models/user.model';
@@ -15,9 +16,11 @@ import { UserRole } from '../../core/models/user.model';
 })
 export class MenuPermissionComponent {
   permissions = signal<MenuPermission[]>([]);
+  isAdmin = computed(() => this.auth.currentRole() === 'admin');
 
   constructor(
     private permissionService: PermissionService,
+    private auth: AuthService,
     private toast: ToastService
   ) {
     this.permissions.set(this.permissionService.getMenuPermissions());
@@ -28,6 +31,7 @@ export class MenuPermissionComponent {
   }
 
   toggleRole(perm: MenuPermission, role: UserRole): void {
+    if (role === 'superadmin' && this.isAdmin()) return;
     const perms = this.permissions();
     const target = perms.find(p => p.menuKey === perm.menuKey);
     if (!target) return;

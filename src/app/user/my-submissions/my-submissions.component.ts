@@ -75,13 +75,12 @@ export class MySubmissionsComponent {
       errors.push('End date is not within any holiday period');
     }
 
-    const current = new Date(start);
     const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    while (current <= end) {
-      if (!this.permissionService.isDayAllowed(current)) {
-        errors.push(`${dayNames[current.getDay()]} (${current.toLocaleDateString()}) is a disabled day`);
-      }
-      current.setDate(current.getDate() + 1);
+    if (!this.permissionService.isDayAllowed(start)) {
+      errors.push(`${dayNames[start.getDay()]} (${start.toLocaleDateString()}) is a disabled day`);
+    }
+    if (!this.permissionService.isDayAllowed(end)) {
+      errors.push(`${dayNames[end.getDay()]} (${end.toLocaleDateString()}) is a disabled day`);
     }
 
     if (errors.length > 0) {

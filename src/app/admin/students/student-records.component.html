@@ -35,6 +35,17 @@
                     <span class="user-card-title">Parent/Guardian #{{ $index + 1 }}</span>
                     <button type="button" class="btn-remove" (click)="removeUser($index)">✕</button>
                   </div>
+                  @if (existingParents().length > 0) {
+                    <div class="form-group" style="margin-bottom: 12px;">
+                      <label>Select Existing Parent</label>
+                      <select class="form-input" [name]="'existingParent'+$index" (change)="selectExistingParent($index, $any($event.target).value)">
+                        <option value="">-- Type manually or select existing --</option>
+                        @for (p of getAvailableParents($index); track p.email) {
+                          <option [value]="p.email">{{ p.name }} ({{ p.email }}) - {{ p.relation }}</option>
+                        }
+                      </select>
+                    </div>
+                  }
                   <div class="user-fields">
                     <div class="form-group">
                       <label>Full Name</label>
@@ -50,17 +61,7 @@
                     </div>
                     <div class="form-group">
                       <label>Location</label>
-                      <input [(ngModel)]="u.location" [name]="'userLocation'+$index" class="form-input" placeholder="Search location..." [attr.list]="'locList'+$index">
-                      <datalist [id]="'locList'+$index">
-                        <option value="New York, NY, USA"></option>
-                        <option value="Los Angeles, CA, USA"></option>
-                        <option value="Chicago, IL, USA"></option>
-                        <option value="Houston, TX, USA"></option>
-                        <option value="Phoenix, AZ, USA"></option>
-                        <option value="London, UK"></option>
-                        <option value="Sydney, Australia"></option>
-                        <option value="Toronto, Canada"></option>
-                      </datalist>
+                      <input [(ngModel)]="u.location" [name]="'userLocation'+$index" class="form-input" placeholder="Enter location">
                     </div>
                     <div class="form-group">
                       <label>Relation</label>

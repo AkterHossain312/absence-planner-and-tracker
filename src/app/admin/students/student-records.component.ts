@@ -19,6 +19,7 @@ const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sun
 export class StudentRecordsComponent {
   days = DAYS;
   students = signal<Student[]>([]);
+  existingParents = signal<StudentUser[]>([]);
   showForm = signal(false);
   editing = signal(false);
   overlapError = signal(false);
@@ -37,6 +38,35 @@ export class StudentRecordsComponent {
 
   loadStudents(): void {
     this.students.set(this.studentService.getAll());
+    this.loadExistingParents();
+  }
+
+  loadExistingParents(): void {
+    const parentMap = new Map<string, StudentUser>();
+    for (const s of this.students()) {
+      for (const u of s.users) {
+        if (u.email && !parentMap.has(u.email)) {
+          parentMap.set(u.email, { ...u });
+        }
+      }
+    }
+    this.existingParents.set(Array.from(parentMap.values()));
+  }
+
+  getAvailableParents(currentIdx: number): StudentUser[] {
+    const selectedEmails = new Set(
+      this.formUsers
+        .filter((u, i) => i !== currentIdx && u.email)
+        .map(u => u.email)
+    );
+    return this.existingParents().filter(p => !selectedEmails.has(p.email));
+  }
+
+  selectExistingParent(idx: number, email: string): void {
+    const parent = this.existingParents().find(p => p.email === email);
+    if (parent) {
+      this.formUsers[idx] = { ...parent };
+    }
   }
 
   openForm(): void {

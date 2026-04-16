@@ -17,5 +17,6 @@
     }
     .toggle input:checked + .slider { background: #4A9FD8; }
     .toggle input:checked + .slider::before { transform: translateX(20px); }
+    .toggle.disabled { opacity: .45; pointer-events: none; }
     .form-actions { margin-top: 16px; }
     .btn-primary { padding: 10px 24px; border: none; border-radius: 8px; background: #4A9FD8; color: #fff; font-weight: 600; cursor: pointer; }

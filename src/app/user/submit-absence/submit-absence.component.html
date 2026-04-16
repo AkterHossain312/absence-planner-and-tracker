@@ -26,14 +26,80 @@
           @if (selectedHolidayId) {
             <div class="form-group">
               <label>Last Attendance Day</label>
-              <input type="date" [(ngModel)]="startDate" name="startDate" class="form-input" required
-                [min]="minDate" [max]="maxDate">
+              <div class="calendar-picker">
+                <button type="button" class="calendar-trigger form-input" (click)="toggleCalendar('start')">
+                  {{ startDate ? formatDisplayDate(startDate) : 'Select date...' }}
+                  <span class="calendar-icon">📅</span>
+                </button>
+                @if (startCalendarOpen()) {
+                  <div class="calendar-dropdown">
+                    <div class="calendar-nav">
+                      <button type="button" (click)="changeMonth(startCalendarMonth, -1)">‹</button>
+                      <span>{{ startCalendarMonth() | date:'MMMM yyyy' }}</span>
+                      <button type="button" (click)="changeMonth(startCalendarMonth, 1)">›</button>
+                    </div>
+                    <div class="calendar-grid">
+                      @for (dn of dayNames; track dn) {
+                        <span class="calendar-header">{{ dn }}</span>
+                      }
+                      @for (day of getCalendarDays(startCalendarMonth()); track $index) {
+                        @if (day) {
+                          <button type="button"
+                            class="calendar-day"
+                            [class.disabled]="!isDaySelectable(day, 'start')"
+                            [class.selected]="isSelected(day, 'start')"
+                            [class.in-range]="isInRange(day)"
+                            [disabled]="!isDaySelectable(day, 'start')"
+                            (click)="selectDate(day, 'start')">
+                            {{ day.getDate() }}
+                          </button>
+                        } @else {
+                          <span class="calendar-day empty"></span>
+                        }
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
             </div>
 
             <div class="form-group">
               <label>Return Day</label>
-              <input type="date" [(ngModel)]="endDate" name="endDate" class="form-input" required
-                [min]="startDate || minDate" [max]="maxDate">
+              <div class="calendar-picker">
+                <button type="button" class="calendar-trigger form-input" (click)="toggleCalendar('end')">
+                  {{ endDate ? formatDisplayDate(endDate) : 'Select date...' }}
+                  <span class="calendar-icon">📅</span>
+                </button>
+                @if (endCalendarOpen()) {
+                  <div class="calendar-dropdown">
+                    <div class="calendar-nav">
+                      <button type="button" (click)="changeMonth(endCalendarMonth, -1)">‹</button>
+                      <span>{{ endCalendarMonth() | date:'MMMM yyyy' }}</span>
+                      <button type="button" (click)="changeMonth(endCalendarMonth, 1)">›</button>
+                    </div>
+                    <div class="calendar-grid">
+                      @for (dn of dayNames; track dn) {
+                        <span class="calendar-header">{{ dn }}</span>
+                      }
+                      @for (day of getCalendarDays(endCalendarMonth()); track $index) {
+                        @if (day) {
+                          <button type="button"
+                            class="calendar-day"
+                            [class.disabled]="!isDaySelectable(day, 'end')"
+                            [class.selected]="isSelected(day, 'end')"
+                            [class.in-range]="isInRange(day)"
+                            [disabled]="!isDaySelectable(day, 'end')"
+                            (click)="selectDate(day, 'end')">
+                            {{ day.getDate() }}
+                          </button>
+                        } @else {
+                          <span class="calendar-day empty"></span>
+                        }
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
             </div>
           }
 

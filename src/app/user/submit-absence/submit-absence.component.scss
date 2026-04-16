@@ -29,4 +29,45 @@
     .btn-primary { padding: 12px 24px; border: none; border-radius: 8px; background: #4A9FD8; color: #fff; font-weight: 600; cursor: pointer; font-size: 14px; }
     .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
     .empty { color: #888; font-size: 13px; }
+
+    /* Calendar Picker */
+    .calendar-picker { position: relative; }
+    .calendar-trigger {
+      display: flex; justify-content: space-between; align-items: center;
+      width: 100%; cursor: pointer; text-align: left; background: #fff;
+    }
+    .calendar-icon { font-size: 16px; }
+    .calendar-dropdown {
+      position: absolute; top: calc(100% + 4px); left: 0; z-index: 100;
+      background: #fff; border: 2px solid #e0e0e0; border-radius: 10px;
+      padding: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.12); width: 280px;
+    }
+    .calendar-nav {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+      span { font-weight: 600; font-size: 14px; color: #333; }
+      button {
+        background: none; border: 1px solid #e0e0e0; border-radius: 6px;
+        width: 30px; height: 30px; cursor: pointer; font-size: 16px; color: #555;
+        &:hover { background: #f0f0f0; }
+      }
+    }
+    .calendar-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center;
+    }
+    .calendar-header {
+      font-size: 11px; font-weight: 600; color: #888; padding: 4px 0;
+    }
+    .calendar-day {
+      padding: 6px 2px; border: none; border-radius: 6px; font-size: 13px;
+      cursor: pointer; background: transparent; color: #333; transition: all 0.15s;
+      &:hover:not(:disabled) { background: #e8f4fd; color: #4A9FD8; }
+      &.selected { background: #4A9FD8; color: #fff; font-weight: 600; }
+      &.in-range { background: #e8f4fd; }
+      &.disabled {
+        color: #ccc; cursor: not-allowed; text-decoration: line-through;
+        background: #f9f9f9;
+      }
+      &.empty { cursor: default; }
+    }
+
     @media (max-width: 768px) { .absence-form { grid-template-columns: 1fr; } }

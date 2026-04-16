@@ -27,10 +27,10 @@
               @for (p of filteredPermissions(); track p.menuKey) {
                 <tr>
                   <td><strong>{{ p.menuKey }}</strong></td>
-                  <td><label class="toggle"><input type="checkbox" [(ngModel)]="p.canAdd"><span class="slider"></span></label></td>
-                  <td><label class="toggle"><input type="checkbox" [(ngModel)]="p.canEdit"><span class="slider"></span></label></td>
-                  <td><label class="toggle"><input type="checkbox" [(ngModel)]="p.canDelete"><span class="slider"></span></label></td>
-                  <td><label class="toggle"><input type="checkbox" [(ngModel)]="p.canView"><span class="slider"></span></label></td>
+                  <td><label class="toggle" [class.disabled]="isAdmin() && isSuperAdminSelected"><input type="checkbox" [(ngModel)]="p.canAdd" [disabled]="isAdmin() && isSuperAdminSelected"><span class="slider"></span></label></td>
+                  <td><label class="toggle" [class.disabled]="isAdmin() && isSuperAdminSelected"><input type="checkbox" [(ngModel)]="p.canEdit" [disabled]="isAdmin() && isSuperAdminSelected"><span class="slider"></span></label></td>
+                  <td><label class="toggle" [class.disabled]="isAdmin() && isSuperAdminSelected"><input type="checkbox" [(ngModel)]="p.canDelete" [disabled]="isAdmin() && isSuperAdminSelected"><span class="slider"></span></label></td>
+                  <td><label class="toggle" [class.disabled]="isAdmin() && isSuperAdminSelected"><input type="checkbox" [(ngModel)]="p.canView" [disabled]="isAdmin() && isSuperAdminSelected"><span class="slider"></span></label></td>
                 </tr>
               }
             </tbody>

@@ -1,7 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PermissionService } from '../../core/services/permission.service';
+import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { FeaturePermission } from '../../core/models/permission.model';
 import { UserRole } from '../../core/models/user.model';
@@ -17,9 +18,12 @@ export class FeaturePermissionComponent {
   allPermissions: FeaturePermission[] = [];
   filteredPermissions = signal<FeaturePermission[]>([]);
   selectedRole: UserRole = 'admin';
+  isAdmin = computed(() => this.auth.currentRole() === 'admin');
+  isSuperAdminSelected = false;
 
   constructor(
     private permissionService: PermissionService,
+    private auth: AuthService,
     private toast: ToastService
   ) {
     this.allPermissions = this.permissionService.getFeaturePermissions();
@@ -27,6 +31,7 @@ export class FeaturePermissionComponent {
   }
 
   applyFilter(): void {
+    this.isSuperAdminSelected = this.selectedRole === 'superadmin';
     this.filteredPermissions.set(this.allPermissions.filter(p => p.role === this.selectedRole));
   }
 
