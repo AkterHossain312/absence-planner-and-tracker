@@ -1,0 +1,44 @@
+<div class="page">
+      <h1 class="page-title">Absence Approval</h1>
+      <div class="filters">
+        <button class="filter-btn" [class.active]="filter() === 'all'" (click)="filter.set('all')">All</button>
+        <button class="filter-btn" [class.active]="filter() === 'pending'" (click)="filter.set('pending')">Pending</button>
+        <button class="filter-btn" [class.active]="filter() === 'approved'" (click)="filter.set('approved')">Approved</button>
+        <button class="filter-btn" [class.active]="filter() === 'rejected'" (click)="filter.set('rejected')">Rejected</button>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Submitted By</th>
+              <th>Date Range</th>
+              <th>Reason</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (a of filteredAbsences(); track a.id) {
+              <tr>
+                <td><strong>{{ a.studentName }}</strong></td>
+                <td>{{ a.userName }}</td>
+                <td>{{ a.startDate | date:'mediumDate' }} — {{ a.endDate | date:'mediumDate' }}</td>
+                <td>{{ a.reason }}</td>
+                <td><span class="status-badge" [class]="a.status">{{ a.status }}</span></td>
+                <td class="actions">
+                  @if (a.status === 'pending') {
+                    <button class="btn-sm approve" (click)="updateStatus(a, 'approved')">Approve</button>
+                    <button class="btn-sm reject" (click)="updateStatus(a, 'rejected')">Reject</button>
+                  } @else {
+                    <span class="done">—</span>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="empty">No absence requests found</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>

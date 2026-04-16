@@ -1,0 +1,78 @@
+<div class="page">
+      <div class="page-header">
+        <h1>System Users</h1>
+        <button class="btn-primary" (click)="openForm()">+ Add User</button>
+      </div>
+
+      @if (showForm()) {
+        <div class="form-card">
+          <h2>Create New User</h2>
+          <form (ngSubmit)="createUser()" class="form-grid">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input [(ngModel)]="form.name" name="name" class="form-input" required placeholder="Full Name">
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" [(ngModel)]="form.email" name="email" class="form-input" required placeholder="user@example.com">
+            </div>
+            <div class="form-group">
+              <label>Phone</label>
+              <input [(ngModel)]="form.phone" name="phone" class="form-input" required placeholder="Phone number">
+            </div>
+            <div class="form-group">
+              <label>Location</label>
+              <input [(ngModel)]="form.location" name="location" class="form-input" placeholder="Search location..." list="locationSuggestions">
+              <datalist id="locationSuggestions">
+                <option value="New York, NY, USA"></option>
+                <option value="Los Angeles, CA, USA"></option>
+                <option value="Chicago, IL, USA"></option>
+                <option value="Houston, TX, USA"></option>
+                <option value="Phoenix, AZ, USA"></option>
+                <option value="London, UK"></option>
+                <option value="Sydney, Australia"></option>
+                <option value="Toronto, Canada"></option>
+              </datalist>
+            </div>
+            <div class="form-group">
+              <label>Role</label>
+              <select [(ngModel)]="form.role" name="role" class="form-input">
+                <option value="admin">Admin</option>
+                <option value="superadmin">SuperAdmin</option>
+              </select>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn-primary" [disabled]="!form.name || !form.email">Create User</button>
+              <button type="button" class="btn-secondary" (click)="showForm.set(false)">Cancel</button>
+            </div>
+          </form>
+        </div>
+      }
+
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Location</th>
+              <th>Role</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of users(); track u.id) {
+              <tr>
+                <td><strong>{{ u.name }}</strong></td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.phone }}</td>
+                <td>{{ u.location || '—' }}</td>
+                <td><span class="role-badge" [class]="u.role">{{ u.role }}</span></td>
+                <td>{{ u.createdAt | date:'mediumDate' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>

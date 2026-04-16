@@ -1,0 +1,23 @@
+.page { }
+    .page-title { margin: 0 0 16px; font-size: 24px; color: #333; }
+    .filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-btn {
+      padding: 8px 16px; border: 2px solid #e0e0e0; border-radius: 8px;
+      background: #fff; cursor: pointer; font-size: 13px; font-weight: 600; transition: all .2s;
+    }
+    .filter-btn.active { border-color: #4A9FD8; color: #4A9FD8; background: #e8f4fd; }
+    .table-wrapper { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+    .data-table th { background: #f8f9fa; padding: 12px 16px; text-align: left; font-size: 13px; color: #666; font-weight: 600; }
+    .data-table td { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+    .data-table .empty { text-align: center; color: #888; padding: 32px; }
+    .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; text-transform: capitalize; }
+    .status-badge.pending { background: #fef5e7; color: #f39c12; }
+    .status-badge.approved { background: #e8faf0; color: #27ae60; }
+    .status-badge.rejected { background: #fde8e8; color: #e74c3c; }
+    .actions { display: flex; gap: 8px; }
+    .btn-sm { padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: 600; }
+    .btn-sm.approve { background: #e8faf0; color: #27ae60; }
+    .btn-sm.reject { background: #fde8e8; color: #e74c3c; }
+    .done { color: #ccc; }
+    @media (max-width: 768px) { .data-table { font-size: 13px; } }

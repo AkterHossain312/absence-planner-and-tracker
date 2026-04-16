@@ -1,0 +1,74 @@
+<div class="page">
+      <h1 class="page-title">My Submissions</h1>
+
+      @if (editingAbsence()) {
+        <div class="form-card">
+          <h2>Edit Absence</h2>
+          @if (lockWarning()) {
+            <div class="lock-warning"><i class="bi bi-lock"></i> {{ lockWarning() }}</div>
+          }
+          <form (ngSubmit)="saveEdit()" class="edit-form">
+            <div class="form-group">
+              <label>Student</label>
+              <input [value]="editingAbsence()!.studentName" class="form-input" disabled>
+            </div>
+            <div class="form-group">
+              <label>Start Date</label>
+              <input type="date" [(ngModel)]="editStartDate" name="startDate" class="form-input">
+            </div>
+            <div class="form-group">
+              <label>End Date</label>
+              <input type="date" [(ngModel)]="editEndDate" name="endDate" class="form-input">
+            </div>
+            <div class="form-group full">
+              <label>Reason</label>
+              <textarea [(ngModel)]="editReason" name="reason" class="form-input" rows="3"></textarea>
+            </div>
+            @if (editErrors().length > 0) {
+              <div class="validation-errors">
+                @for (err of editErrors(); track err) {
+                  <p><i class="bi bi-exclamation-triangle"></i> {{ err }}</p>
+                }
+              </div>
+            }
+            <div class="form-actions">
+              <button type="submit" class="btn-primary">Save Changes</button>
+              <button type="button" class="btn-secondary" (click)="cancelEdit()">Cancel</button>
+            </div>
+          </form>
+        </div>
+      }
+
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Date Range</th>
+              <th>Reason</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (a of myAbsences(); track a.id) {
+              <tr>
+                <td><strong>{{ a.studentName }}</strong></td>
+                <td>{{ a.startDate | date:'mediumDate' }} — {{ a.endDate | date:'mediumDate' }}</td>
+                <td>{{ a.reason }}</td>
+                <td><span class="status-badge" [class]="a.status">{{ a.status }}</span></td>
+                <td>
+                  @if (a.status === 'pending') {
+                    <button class="btn-sm edit" (click)="startEdit(a)">Edit</button>
+                  } @else {
+                    <span class="done">—</span>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="empty">No submissions yet</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>

@@ -1,0 +1,32 @@
+<div class="page">
+      <h1 class="page-title">Calendar Day Control</h1>
+      <p class="subtitle">Control which weekdays are visible/allowed in the calendar for absence planning</p>
+
+      <div class="card">
+        <h2>Allowed Days</h2>
+        <div class="days-grid">
+          @for (day of allDays; track day) {
+            <label class="day-toggle" [class.active]="isDayEnabled(day)">
+              <input type="checkbox" [checked]="isDayEnabled(day)" (change)="toggleDay(day)">
+              <span class="day-name">{{ day }}</span>
+              <span class="day-status">{{ isDayEnabled(day) ? 'Enabled' : 'Disabled' }}</span>
+            </label>
+          }
+        </div>
+
+        <div class="preview">
+          <h3>Preview — Allowed Days</h3>
+          <div class="preview-days">
+            @for (d of enabledDays(); track d) {
+              <span class="preview-badge">{{ d }}</span>
+            } @empty {
+              <span class="preview-none">No days enabled</span>
+            }
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-primary" (click)="save()">Save Configuration</button>
+        </div>
+      </div>
+    </div>

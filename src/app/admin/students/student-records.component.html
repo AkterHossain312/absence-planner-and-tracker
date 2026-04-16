@@ -1,0 +1,158 @@
+<div class="page">
+      <div class="page-header">
+        <h1>Student Records</h1>
+        <button class="btn-primary" (click)="openForm()">+ Add Student</button>
+      </div>
+
+      @if (showForm()) {
+        <div class="form-card">
+          <h2>{{ editing() ? 'Edit Student' : 'Add Student' }}</h2>
+          <form (ngSubmit)="saveStudent()" class="student-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Student Name</label>
+                <input [(ngModel)]="form.name" name="name" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label>Grade</label>
+                <input [(ngModel)]="form.grade" name="grade" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label>Section</label>
+                <input [(ngModel)]="form.section" name="section" class="form-input" required>
+              </div>
+            </div>
+
+            <!-- Associated Users (Parents / Guardians) -->
+            <div class="section-block">
+              <div class="section-header">
+                <h3>Parents / Guardians</h3>
+                <button type="button" class="btn-sm-add" (click)="addUser()">+ Add Parent/Guardian</button>
+              </div>
+              @for (u of formUsers; track $index) {
+                <div class="user-card">
+                  <div class="user-card-header">
+                    <span class="user-card-title">Parent/Guardian #{{ $index + 1 }}</span>
+                    <button type="button" class="btn-remove" (click)="removeUser($index)">✕</button>
+                  </div>
+                  <div class="user-fields">
+                    <div class="form-group">
+                      <label>Full Name</label>
+                      <input [(ngModel)]="u.name" [name]="'userName'+$index" class="form-input" required placeholder="Full Name">
+                    </div>
+                    <div class="form-group">
+                      <label>Email</label>
+                      <input type="email" [(ngModel)]="u.email" [name]="'userEmail'+$index" class="form-input" required placeholder="email@example.com">
+                    </div>
+                    <div class="form-group">
+                      <label>Phone</label>
+                      <input [(ngModel)]="u.phone" [name]="'userPhone'+$index" class="form-input" required placeholder="Phone number">
+                    </div>
+                    <div class="form-group">
+                      <label>Location</label>
+                      <input [(ngModel)]="u.location" [name]="'userLocation'+$index" class="form-input" placeholder="Search location..." [attr.list]="'locList'+$index">
+                      <datalist [id]="'locList'+$index">
+                        <option value="New York, NY, USA"></option>
+                        <option value="Los Angeles, CA, USA"></option>
+                        <option value="Chicago, IL, USA"></option>
+                        <option value="Houston, TX, USA"></option>
+                        <option value="Phoenix, AZ, USA"></option>
+                        <option value="London, UK"></option>
+                        <option value="Sydney, Australia"></option>
+                        <option value="Toronto, Canada"></option>
+                      </datalist>
+                    </div>
+                    <div class="form-group">
+                      <label>Relation</label>
+                      <select [(ngModel)]="u.relation" [name]="'relation'+$index" class="form-input">
+                        <option value="mother">Mother</option>
+                        <option value="father">Father</option>
+                        <option value="guardian">Guardian</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Subjects -->
+            <div class="section-block">
+              <div class="section-header">
+                <h3>Subjects & Schedules</h3>
+                <button type="button" class="btn-sm-add" (click)="addSubject()">+ Add Subject</button>
+              </div>
+              @for (sub of formSubjects; track sub.id) {
+                <div class="subject-block">
+                  <div class="subject-header">
+                    <input [(ngModel)]="sub.name" [name]="'subName'+$index" placeholder="Subject Name" class="form-input" required>
+                    <button type="button" class="btn-remove" (click)="removeSubject($index)">✕</button>
+                  </div>
+                  <div class="schedules">
+                    @for (sch of sub.schedules; track $index) {
+                      <div class="schedule-row">
+                        <select [(ngModel)]="sch.day" [name]="'day'+sub.id+'_'+$index" class="form-input">
+                          @for (d of days; track d) {
+                            <option [value]="d">{{ d }}</option>
+                          }
+                        </select>
+                        <input type="time" [(ngModel)]="sch.startTime" [name]="'start'+sub.id+'_'+$index" class="form-input">
+                        <input type="time" [(ngModel)]="sch.endTime" [name]="'end'+sub.id+'_'+$index" class="form-input">
+                        <button type="button" class="btn-remove" (click)="removeScheduleFromSubject(sub, $index)">✕</button>
+                      </div>
+                    }
+                    <button type="button" class="btn-sm-add small" (click)="addScheduleToSubject(sub)">+ Add Schedule</button>
+                  </div>
+                </div>
+              }
+            </div>
+
+            @if (overlapError()) {
+              <div class="error-msg"><i class="bi bi-exclamation-triangle"></i> Overlapping class times detected. Please fix schedules.</div>
+            }
+
+            <div class="form-actions">
+              <button type="submit" class="btn-primary" [disabled]="!form.name || !form.grade">Save Student</button>
+              <button type="button" class="btn-secondary" (click)="closeForm()">Cancel</button>
+            </div>
+          </form>
+        </div>
+      }
+
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student ID</th>
+              <th>Name</th>
+              <th>Grade</th>
+              <th>Section</th>
+              <th>Father's Name</th>
+              <th>Mother's Name</th>
+              <th>Guardian Name</th>
+              <th>Subjects</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (s of students(); track s.id) {
+              <tr>
+                <td>{{ s.studentId }}</td>
+                <td><strong>{{ s.name }}</strong></td>
+                <td>{{ s.grade }}</td>
+                <td>{{ s.section }}</td>
+                <td>{{ getUserByRelation(s, 'father') }}</td>
+                <td>{{ getUserByRelation(s, 'mother') }}</td>
+                <td>{{ getUserByRelation(s, 'guardian') }}</td>
+                <td>{{ s.subjects.length }}</td>
+                <td class="actions">
+                  <button class="btn-sm edit" (click)="editStudent(s)">Edit</button>
+                  <button class="btn-sm delete" (click)="deleteStudent(s.id)">Delete</button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="9" class="empty">No students added yet</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>

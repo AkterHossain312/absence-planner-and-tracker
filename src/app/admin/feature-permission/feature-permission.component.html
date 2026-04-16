@@ -1,0 +1,43 @@
+<div class="page">
+      <h1 class="page-title">Feature Permission</h1>
+      <p class="subtitle">Control Add/Edit/Delete/View actions per menu and role</p>
+
+      <div class="filter-row">
+        <label>Filter by Role:</label>
+        <select [(ngModel)]="selectedRole" (ngModelChange)="applyFilter()" class="form-input">
+          <option value="superadmin">SuperAdmin</option>
+          <option value="admin">Admin</option>
+          <option value="user">User</option>
+        </select>
+      </div>
+
+      <div class="perm-card">
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Menu</th>
+                <th>Add</th>
+                <th>Edit</th>
+                <th>Delete</th>
+                <th>View</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of filteredPermissions(); track p.menuKey) {
+                <tr>
+                  <td><strong>{{ p.menuKey }}</strong></td>
+                  <td><label class="toggle"><input type="checkbox" [(ngModel)]="p.canAdd"><span class="slider"></span></label></td>
+                  <td><label class="toggle"><input type="checkbox" [(ngModel)]="p.canEdit"><span class="slider"></span></label></td>
+                  <td><label class="toggle"><input type="checkbox" [(ngModel)]="p.canDelete"><span class="slider"></span></label></td>
+                  <td><label class="toggle"><input type="checkbox" [(ngModel)]="p.canView"><span class="slider"></span></label></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="form-actions">
+          <button class="btn-primary" (click)="savePermissions()">Save Changes</button>
+        </div>
+      </div>
+    </div>

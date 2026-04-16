@@ -1,0 +1,82 @@
+.topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      height: 60px; background: #4A9FD8; color: #fff;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px; box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .hamburger { background: none; border: none; cursor: pointer; display: none; flex-direction: column; gap: 4px; padding: 8px; }
+    .hamburger span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 2px; }
+    .logo { display: flex; align-items: center; gap: 8px; }
+    .logo-img { height: 36px; width: auto; object-fit: contain; }
+    .logo-text { font-size: 18px; font-weight: 700; letter-spacing: .5px; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .role-switcher { display: flex; gap: 4px; }
+    .btn-role {
+      padding: 4px 10px; border: 1px solid rgba(255,255,255,.4); border-radius: 4px;
+      background: transparent; color: #fff; cursor: pointer; font-size: 12px; transition: all .2s;
+    }
+    .btn-role:hover, .btn-role.active { background: rgba(255,255,255,.25); border-color: #fff; }
+    .notification-wrapper { position: relative; }
+    .btn-icon { background: none; border: none; cursor: pointer; position: relative; padding: 6px; color: #fff; font-size: 20px; }
+    .notif-type .bi { font-size: 18px; }
+    .notif-type .bi-calendar-event { color: #4A9FD8; }
+    .notif-type .bi-check-circle-fill { color: #27ae60; }
+    .notif-type .bi-x-circle-fill { color: #e74c3c; }
+    .notif-type .bi-info-circle { color: #3498db; }
+    .bell { font-size: 20px; }
+    .badge {
+      position: absolute; top: 0; right: 0; background: #e74c3c; color: #fff;
+      border-radius: 50%; width: 18px; height: 18px; font-size: 10px;
+      display: flex; align-items: center; justify-content: center; font-weight: 700;
+    }
+    .notification-panel {
+      position: absolute; top: 100%; right: 0; width: 340px; max-height: 400px;
+      background: #fff; color: #333; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.15);
+      overflow: hidden; margin-top: 8px;
+    }
+    .notif-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #eee; }
+    .btn-link { background: none; border: none; color: #4A9FD8; cursor: pointer; font-size: 12px; }
+    .notif-list { max-height: 320px; overflow-y: auto; }
+    .notif-item { display: flex; gap: 10px; padding: 10px 16px; cursor: pointer; border-bottom: 1px solid #f5f5f5; transition: background .2s; }
+    .notif-item:hover { background: #f8f9fa; }
+    .notif-item.unread { background: #edf5fd; }
+    .notif-content p { margin: 0; font-size: 13px; }
+    .notif-content small { color: #888; }
+    .notif-empty { text-align: center; padding: 24px; color: #888; }
+    .user-menu { position: relative; }
+    .user-btn {
+      display: flex; align-items: center; gap: 8px; background: none; border: none;
+      color: #fff; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: background .2s;
+    }
+    .user-btn:hover { background: rgba(255,255,255,.15); }
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,.3);
+      display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;
+    }
+    .user-name { font-size: 14px; font-weight: 500; }
+    .caret { font-size: 10px; opacity: .7; }
+    .dropdown-menu {
+      position: absolute; top: 100%; right: 0; width: 200px;
+      background: #fff; color: #333; border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.15); margin-top: 8px; overflow: hidden;
+    }
+    .dropdown-info { padding: 12px 16px; }
+    .dropdown-info strong { display: block; }
+    .dropdown-info small { color: #888; text-transform: capitalize; }
+    .dropdown-menu hr { margin: 0; border: none; border-top: 1px solid #eee; }
+    .dropdown-item {
+      width: 100%; padding: 10px 16px; border: none; background: none;
+      cursor: pointer; text-align: left; font-size: 14px; transition: background .2s;
+    }
+    .dropdown-item:hover { background: #f8f9fa; }
+    @media (max-width: 768px) {
+      .hamburger { display: flex; }
+      .role-switcher { display: none; }
+      .user-name { display: none; }
+      .logo-text { display: none; }
+      .notification-panel { width: 280px; right: -50px; }
+    }
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .role-switcher .btn-role { font-size: 11px; padding: 3px 6px; }
+    }

@@ -1,0 +1,11 @@
+.main-content {
+      margin-top: 60px; margin-left: 260px; padding: 24px;
+      min-height: calc(100vh - 60px); background: #f5f7fa;
+      transition: margin-left .3s ease;
+    }
+    @media (max-width: 768px) {
+      .main-content { margin-left: 0; padding: 16px; }
+    }
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .main-content { margin-left: 220px; padding: 20px; }
+    }

@@ -1,0 +1,30 @@
+<div class="page">
+      <h1 class="page-title">Daily Packing Report</h1>
+      <p class="subtitle">Student-wise daily packing overview (mock data)</p>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Grade</th>
+              <th>Section</th>
+              <th>Date</th>
+              <th>Packed Items</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of mockData; track r.student + r.date) {
+              <tr>
+                <td><strong>{{ r.student }}</strong></td>
+                <td>{{ r.grade }}</td>
+                <td>{{ r.section }}</td>
+                <td>{{ r.date }}</td>
+                <td>{{ r.items.join(', ') }}</td>
+                <td><span class="status-badge" [class]="r.status === 'Complete' ? 'approved' : 'pending'">{{ r.status }}</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>

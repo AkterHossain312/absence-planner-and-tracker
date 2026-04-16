@@ -1,0 +1,32 @@
+<div class="page">
+      <h1 class="page-title">Menu Permission</h1>
+      <p class="subtitle">Enable or disable sidebar menu items per role</p>
+
+      <div class="perm-card">
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Menu Item</th>
+                <th>SuperAdmin</th>
+                <th>Admin</th>
+                <th>User</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (perm of permissions(); track perm.menuKey) {
+                <tr>
+                  <td><strong>{{ perm.label }}</strong></td>
+                  <td><label class="toggle"><input type="checkbox" [checked]="hasRole(perm, 'superadmin')" (change)="toggleRole(perm, 'superadmin')"><span class="slider"></span></label></td>
+                  <td><label class="toggle"><input type="checkbox" [checked]="hasRole(perm, 'admin')" (change)="toggleRole(perm, 'admin')"><span class="slider"></span></label></td>
+                  <td><label class="toggle"><input type="checkbox" [checked]="hasRole(perm, 'user')" (change)="toggleRole(perm, 'user')"><span class="slider"></span></label></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="form-actions">
+          <button class="btn-primary" (click)="savePermissions()">Save Changes</button>
+        </div>
+      </div>
+    </div>

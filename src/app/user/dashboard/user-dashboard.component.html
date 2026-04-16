@@ -1,0 +1,71 @@
+<div class="dashboard">
+      <h1 class="page-title">My Dashboard</h1>
+      <p class="welcome">Welcome, <strong>{{ auth.currentUserName() }}</strong></p>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue"><i class="bi bi-mortarboard"></i></div>
+          <div class="stat-info">
+            <h3>{{ myStudents().length }}</h3>
+            <p>Student(s)</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange"><i class="bi bi-pencil-square"></i></div>
+          <div class="stat-info">
+            <h3>{{ pendingCount() }}</h3>
+            <p>Pending Requests</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green"><i class="bi bi-check-circle"></i></div>
+          <div class="stat-info">
+            <h3>{{ approvedCount() }}</h3>
+            <p>Approved</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple"><i class="bi bi-calendar-event"></i></div>
+          <div class="stat-info">
+            <h3>{{ upcomingHolidays().length }}</h3>
+            <p>Upcoming Holidays</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Student(s)</h2>
+        <div class="student-cards">
+          @for (s of myStudents(); track s.id) {
+            <div class="student-card">
+              <h3>{{ s.name }}</h3>
+              <p>Grade {{ s.grade }} — Section {{ s.section }}</p>
+              <p class="subjects">{{ s.subjects.length }} subject(s)</p>
+            </div>
+          } @empty {
+            <p class="empty">No students assigned</p>
+          }
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Upcoming Holidays</h2>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Start</th><th>End</th><th>Action</th></tr></thead>
+            <tbody>
+              @for (h of upcomingHolidays(); track h.id) {
+                <tr>
+                  <td><strong>{{ h.name }}</strong></td>
+                  <td>{{ h.startDate | date:'mediumDate' }}</td>
+                  <td>{{ h.endDate | date:'mediumDate' }}</td>
+                  <td><button class="btn-primary btn-sm" (click)="submitAbsencePlan(h.id)">Submit Absence Plan</button></td>
+                </tr>
+              } @empty {
+                <tr><td colspan="4" class="empty">No upcoming holidays</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>

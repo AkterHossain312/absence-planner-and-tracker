@@ -1,0 +1,18 @@
+<aside class="sidebar" [class.collapsed]="!isOpen">
+      <div class="sidebar-overlay" [class.active]="isOpen" (click)="close()"></div>
+      <nav class="sidebar-nav">
+        <div class="sidebar-header">
+          <span class="sidebar-title">Navigation</span>
+        </div>
+        <ul class="menu-list">
+          @for (item of visibleMenuItems(); track item.key) {
+            <li>
+              <a [routerLink]="item.route" routerLinkActive="active" class="menu-item" (click)="close()">
+                <i class="bi menu-icon" [ngClass]="item.icon"></i>
+                <span class="menu-label">{{ item.label }}</span>
+              </a>
+            </li>
+          }
+        </ul>
+      </nav>
+    </aside>

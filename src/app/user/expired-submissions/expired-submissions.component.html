@@ -1,0 +1,31 @@
+<div class="page">
+      <h1 class="page-title">Expired Submissions</h1>
+      <p class="subtitle">Absence plans not submitted before the holiday submission deadline.</p>
+
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Holiday</th>
+              <th>Holiday Period</th>
+              <th>Submission Deadline</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of expiredItems(); track item.studentId + item.holiday.id) {
+              <tr>
+                <td><strong>{{ item.studentName }}</strong></td>
+                <td>{{ item.holiday.name }}</td>
+                <td>{{ item.holiday.startDate | date:'mediumDate' }} — {{ item.holiday.endDate | date:'mediumDate' }}</td>
+                <td>{{ item.holiday.submissionDeadline | date:'mediumDate' }}</td>
+                <td><span class="status-badge expired">Expired</span></td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="empty">No expired submissions — you're all caught up!</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>

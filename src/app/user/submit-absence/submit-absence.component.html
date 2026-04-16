@@ -1,0 +1,88 @@
+<div class="page">
+      <h1 class="page-title">Submit Absence</h1>
+
+      <div class="form-card">
+        <form (ngSubmit)="submitAbsence()" class="absence-form">
+          <div class="form-group">
+            <label>Select Holiday Period</label>
+            <select [(ngModel)]="selectedHolidayId" name="holiday" class="form-input" required (ngModelChange)="onHolidayChange()">
+              <option value="">-- Select Holiday --</option>
+              @for (h of holidays(); track h.id) {
+                <option [value]="h.id">{{ h.name }} ({{ h.startDate | date:'mediumDate' }} — {{ h.endDate | date:'mediumDate' }})</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Select Student</label>
+            <select [(ngModel)]="selectedStudentId" name="student" class="form-input" required>
+              <option value="">-- Select Student --</option>
+              @for (s of myStudents(); track s.id) {
+                <option [value]="s.id">{{ s.name }} (Grade {{ s.grade }})</option>
+              }
+            </select>
+          </div>
+
+          @if (selectedHolidayId) {
+            <div class="form-group">
+              <label>Last Attendance Day</label>
+              <input type="date" [(ngModel)]="startDate" name="startDate" class="form-input" required
+                [min]="minDate" [max]="maxDate">
+            </div>
+
+            <div class="form-group">
+              <label>Return Day</label>
+              <input type="date" [(ngModel)]="endDate" name="endDate" class="form-input" required
+                [min]="startDate || minDate" [max]="maxDate">
+            </div>
+          }
+
+          <div class="form-group">
+            <label>Homework Load</label>
+            <select [(ngModel)]="homeworkLoad" name="homeworkLoad" class="form-input" required>
+              <option value="">-- Select Homework Load --</option>
+              <option value="Increase">Increase</option>
+              <option value="Decrease">Decrease</option>
+              <option value="Moderate">Moderate</option>
+            </select>
+          </div>
+
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="digitalKumon" name="digitalKumon">
+              <span>Digital Kumon</span>
+            </label>
+          </div>
+
+          <div class="form-group full">
+            <label>Reason</label>
+            <textarea [(ngModel)]="reason" name="reason" class="form-input" rows="3" required
+              placeholder="Provide reason for absence"></textarea>
+          </div>
+
+          @if (validationErrors().length > 0) {
+            <div class="validation-errors">
+              @for (err of validationErrors(); track err) {
+                <p><i class="bi bi-exclamation-triangle"></i> {{ err }}</p>
+              }
+            </div>
+          }
+
+          <div class="allowed-days-info">
+            <h3>Allowed Days</h3>
+            <div class="days-chips">
+              @for (d of allowedDays(); track d) {
+                <span class="day-chip">{{ d }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary"
+              [disabled]="!selectedHolidayId || !selectedStudentId || !startDate || !endDate || !reason || !homeworkLoad">
+              Submit Absence
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>

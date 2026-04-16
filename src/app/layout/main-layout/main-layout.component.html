@@ -1,0 +1,6 @@
+<app-topbar (toggleSidebar)="toggleSidebar()"></app-topbar>
+    <app-sidebar [isOpen]="sidebarOpen()" [onClose]="closeSidebar"></app-sidebar>
+    <main class="main-content" [class.sidebar-open]="sidebarOpen()">
+      <router-outlet></router-outlet>
+    </main>
+    <app-toast-container></app-toast-container>

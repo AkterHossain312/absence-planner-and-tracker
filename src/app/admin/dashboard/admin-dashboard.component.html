@@ -1,0 +1,77 @@
+<div class="dashboard">
+      <h1 class="page-title">Dashboard</h1>
+      <p class="welcome">Welcome back, <strong>{{ auth.currentUserName() }}</strong> ({{ auth.currentRole() }})</p>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue"><i class="bi bi-mortarboard"></i></div>
+          <div class="stat-info">
+            <h3>{{ totalStudents() }}</h3>
+            <p>Total Students</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green"><i class="bi bi-calendar-event"></i></div>
+          <div class="stat-info">
+            <h3>{{ totalHolidays() }}</h3>
+            <p>Holiday Periods</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange"><i class="bi bi-pencil-square"></i></div>
+          <div class="stat-info">
+            <h3>{{ pendingAbsences() }}</h3>
+            <p>Pending Absences</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple"><i class="bi bi-check-circle"></i></div>
+          <div class="stat-info">
+            <h3>{{ approvedAbsences() }}</h3>
+            <p>Approved Absences</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red"><i class="bi bi-x-circle"></i></div>
+          <div class="stat-info">
+            <h3>{{ rejectedAbsences() }}</h3>
+            <p>Rejected Absences</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon teal"><i class="bi bi-people"></i></div>
+          <div class="stat-info">
+            <h3>{{ totalUsers() }}</h3>
+            <p>System Users</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="recent-section">
+        <h2>Recent Absence Requests</h2>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Submitted By</th>
+                <th>Date Range</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (a of recentAbsences(); track a.id) {
+                <tr>
+                  <td>{{ a.studentName }}</td>
+                  <td>{{ a.userName }}</td>
+                  <td>{{ a.startDate | date:'mediumDate' }} — {{ a.endDate | date:'mediumDate' }}</td>
+                  <td><span class="status-badge" [class]="a.status">{{ a.status }}</span></td>
+                </tr>
+              } @empty {
+                <tr><td colspan="4" class="empty">No absence requests yet</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>

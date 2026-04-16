@@ -1,0 +1,22 @@
+.page { max-width: 700px; margin: 0 auto; }
+    .page-title { margin: 0 0 4px; font-size: 24px; color: #333; }
+    .subtitle { color: #888; margin: 0 0 20px; }
+    .card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+    .card h2 { margin: 0 0 16px; font-size: 18px; }
+    .days-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+    .day-toggle {
+      display: flex; align-items: center; gap: 10px; padding: 14px 16px;
+      border: 2px solid #e8e8e8; border-radius: 10px; cursor: pointer; transition: all .2s;
+    }
+    .day-toggle.active { border-color: #4A9FD8; background: #f0f7fd; }
+    .day-toggle input { width: 18px; height: 18px; accent-color: #4A9FD8; }
+    .day-name { font-weight: 600; font-size: 14px; color: #333; flex: 1; }
+    .day-status { font-size: 11px; color: #888; }
+    .day-toggle.active .day-status { color: #4A9FD8; }
+    .preview { margin-top: 24px; padding: 16px; background: #f8f9fa; border-radius: 8px; }
+    .preview h3 { margin: 0 0 10px; font-size: 14px; color: #666; }
+    .preview-days { display: flex; gap: 8px; flex-wrap: wrap; }
+    .preview-badge { padding: 6px 14px; background: #4A9FD8; color: #fff; border-radius: 20px; font-size: 13px; font-weight: 600; }
+    .preview-none { color: #e74c3c; font-size: 13px; }
+    .form-actions { margin-top: 20px; }
+    .btn-primary { padding: 10px 24px; border: none; border-radius: 8px; background: #4A9FD8; color: #fff; font-weight: 600; cursor: pointer; }
