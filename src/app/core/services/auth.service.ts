@@ -1,7 +1,7 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { StorageService } from './storage.service';
-import { User, Session, UserRole } from '../models/user.model';
+import { User, Session, UserRole, UserStatus } from '../models/user.model';
 
 const SESSION_KEY = 'abs_session';
 const USERS_KEY = 'abs_users';
@@ -24,7 +24,20 @@ export class AuthService {
   }
 
   getUsers(): User[] {
-    return this.storage.get<User[]>(USERS_KEY) ?? [];
+    const users = this.storage.get<User[]>(USERS_KEY) ?? [];
+    // Migrate legacy users without status/emailVerified fields
+    let migrated = false;
+    for (const u of users) {
+      if (u.status === undefined) {
+        (u as any).status = 'active';
+        (u as any).emailVerified = true;
+        migrated = true;
+      }
+    }
+    if (migrated) {
+      this.storage.set(USERS_KEY, users);
+    }
+    return users;
   }
 
   findUserByEmailOrPhone(identifier: string): User | undefined {
@@ -33,6 +46,23 @@ export class AuthService {
 
   verifyOtp(_otp: string): boolean {
     return _otp.length === 4 && /^\d{4}$/.test(_otp);
+  }
+
+  /**
+   * Returns null on success, or an error message if login is blocked.
+   */
+  tryLogin(user: User): string | null {
+    if (user.status === 'pending_verification') {
+      return 'Please verify your email before logging in.';
+    }
+    if (user.status === 'pending_approval') {
+      return 'Your account is pending admin approval. Please wait.';
+    }
+    if (user.status === 'rejected') {
+      return 'Your account registration has been rejected. Contact admin.';
+    }
+    this.login(user);
+    return null;
   }
 
   login(user: User): void {
@@ -55,7 +85,7 @@ export class AuthService {
 
   switchRole(role: UserRole): void {
     const users = this.getUsers();
-    const target = users.find(u => u.role === role);
+    const target = users.find(u => u.role === role && u.status === 'active');
     if (target) {
       this.login(target);
       if (role === 'user') {
@@ -64,6 +94,72 @@ export class AuthService {
         this.router.navigate(['/admin/dashboard']);
       }
     }
+  }
+
+  // --- Registration Flow ---
+
+  register(data: { name: string; email: string; phone: string; location: string }): { success: boolean; error?: string; userId?: string } {
+    const existing = this.findUserByEmailOrPhone(data.email);
+    if (existing) {
+      return { success: false, error: 'An account with this email already exists.' };
+    }
+    if (data.phone) {
+      const byPhone = this.findUserByEmailOrPhone(data.phone);
+      if (byPhone) {
+        return { success: false, error: 'An account with this phone number already exists.' };
+      }
+    }
+
+    const user: User = {
+      id: crypto.randomUUID(),
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      location: data.location,
+      role: 'user',
+      password: '1234',
+      status: 'pending_verification',
+      emailVerified: false,
+      createdAt: new Date().toISOString()
+    };
+    this.addUser(user);
+    return { success: true, userId: user.id };
+  }
+
+  verifyEmail(userId: string): boolean {
+    const users = this.getUsers();
+    const user = users.find(u => u.id === userId);
+    if (!user || user.status !== 'pending_verification') return false;
+    user.emailVerified = true;
+    user.status = 'pending_approval';
+    this.storage.set(USERS_KEY, users);
+    return true;
+  }
+
+  getPendingApprovalUsers(): User[] {
+    return this.getUsers().filter(u => u.status === 'pending_approval');
+  }
+
+  getRejectedUsers(): User[] {
+    return this.getUsers().filter(u => u.status === 'rejected');
+  }
+
+  approveUser(userId: string): boolean {
+    const users = this.getUsers();
+    const user = users.find(u => u.id === userId);
+    if (!user || user.status !== 'pending_approval') return false;
+    user.status = 'active';
+    this.storage.set(USERS_KEY, users);
+    return true;
+  }
+
+  rejectUser(userId: string): boolean {
+    const users = this.getUsers();
+    const user = users.find(u => u.id === userId);
+    if (!user) return false;
+    user.status = 'rejected';
+    this.storage.set(USERS_KEY, users);
+    return true;
   }
 
   addUser(user: User): void {
@@ -79,5 +175,10 @@ export class AuthService {
       users[idx] = user;
       this.storage.set(USERS_KEY, users);
     }
+  }
+
+  deleteUser(userId: string): void {
+    const users = this.getUsers().filter(u => u.id !== userId);
+    this.storage.set(USERS_KEY, users);
   }
 }

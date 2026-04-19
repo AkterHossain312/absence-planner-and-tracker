@@ -1,4 +1,5 @@
 export type UserRole = 'superadmin' | 'admin' | 'user';
+export type UserStatus = 'pending_verification' | 'pending_approval' | 'active' | 'rejected';
 
 export interface User {
   id: string;
@@ -8,6 +9,8 @@ export interface User {
   location: string;
   role: UserRole;
   password: string;
+  status: UserStatus;
+  emailVerified: boolean;
   createdAt: string;
 }
 

@@ -1,0 +1,83 @@
+<div class="register-page">
+  <div class="register-card">
+    <div class="register-header">
+      <span class="register-logo"><i class="bi bi-mortarboard-fill"></i></span>
+      <h1>Parent Registration</h1>
+      <p>Create your parent account</p>
+    </div>
+
+    @if (step() === 'form') {
+      <form (ngSubmit)="submitRegistration()" class="register-form">
+        <div class="form-group">
+          <label for="name">Full Name <span class="required">*</span></label>
+          <input id="name" type="text" [(ngModel)]="name" name="name" placeholder="Enter your full name" required class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="email">Email Address <span class="required">*</span></label>
+          <input id="email" type="email" [(ngModel)]="email" name="email" placeholder="Enter your email" required class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="phone">Phone Number <span class="required">*</span></label>
+          <input id="phone" type="tel" [(ngModel)]="phone" name="phone" placeholder="Enter your phone number" required class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="location">Location</label>
+          <input id="location" type="text" [(ngModel)]="location" name="location" placeholder="City, State, Country" class="form-input">
+        </div>
+
+        @if (errorMsg()) {
+          <div class="error-msg">{{ errorMsg() }}</div>
+        }
+
+        <button type="submit" class="btn-primary" [disabled]="!name || !email || !phone">
+          <i class="bi bi-envelope"></i> Register & Send Verification
+        </button>
+        <button type="button" class="btn-secondary" (click)="goToLogin()">
+          ← Back to Login
+        </button>
+      </form>
+    }
+
+    @if (step() === 'verify') {
+      <form (ngSubmit)="verifyEmail()" class="register-form">
+        <div class="verify-info">
+          <div class="verify-icon"><i class="bi bi-envelope-check"></i></div>
+          <p>Verification code sent to <strong>{{ email }}</strong></p>
+          <small>Enter any 6-digit code to simulate email verification</small>
+        </div>
+        <div class="form-group">
+          <label for="code">Verification Code</label>
+          <input id="code" type="text" [(ngModel)]="verificationCode" name="code" placeholder="Enter 6-digit code" maxlength="6" class="form-input code-input">
+        </div>
+
+        @if (errorMsg()) {
+          <div class="error-msg">{{ errorMsg() }}</div>
+        }
+
+        <button type="submit" class="btn-primary" [disabled]="verificationCode.length !== 6">
+          <i class="bi bi-check-circle"></i> Verify Email
+        </button>
+        <button type="button" class="btn-secondary" (click)="goBack()">
+          ← Back
+        </button>
+      </form>
+    }
+
+    @if (step() === 'done') {
+      <div class="done-section">
+        <div class="done-icon"><i class="bi bi-hourglass-split"></i></div>
+        <h2>Account Pending Approval</h2>
+        <p>Your email has been verified successfully.</p>
+        <p>An administrator will review and approve your account. You will be notified once your account is activated.</p>
+        <div class="done-details">
+          <div class="detail-row"><strong>Name:</strong> {{ name }}</div>
+          <div class="detail-row"><strong>Email:</strong> {{ email }}</div>
+          <div class="detail-row"><strong>Phone:</strong> {{ phone }}</div>
+        </div>
+        <button class="btn-primary" (click)="goToLogin()">
+          <i class="bi bi-box-arrow-in-right"></i> Go to Login
+        </button>
+      </div>
+    }
+  </div>
+</div>

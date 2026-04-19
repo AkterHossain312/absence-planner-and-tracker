@@ -1,0 +1,228 @@
+<div class="page">
+  <div class="page-header">
+    <h1>My Students</h1>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="openAddForm()">
+        <i class="bi bi-plus-lg"></i> Add Student
+      </button>
+      <button class="btn-outline" (click)="openLinkForm()">
+        <i class="bi bi-link-45deg"></i> Link to Existing Student
+      </button>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Student ID</th>
+          <th>Name</th>
+          <th>Grade</th>
+          <th>Section</th>
+          <th>Subjects</th>
+          <th>Parents / Guardians</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (student of myStudents(); track student.id) {
+          <tr>
+            <td>{{ student.studentId }}</td>
+            <td><strong>{{ student.name }}</strong></td>
+            <td>{{ student.grade }}</td>
+            <td>{{ student.section || '—' }}</td>
+            <td>
+              @for (sub of student.subjects; track sub.id) {
+                <span class="subject-chip">{{ sub.name }}</span>
+              } @empty {
+                <span class="text-muted">—</span>
+              }
+            </td>
+            <td>
+              @for (u of student.users; track u.userId) {
+                <span class="parent-chip">{{ u.name }} ({{ u.relation }})</span>
+              }
+            </td>
+            <td class="actions">
+              @if (hasPendingRemoval(student.id)) {
+                <span class="removal-pending"><i class="bi bi-hourglass-split"></i> Pending</span>
+              } @else {
+                <button class="btn-sm delete" (click)="openRemovalForm(student)">Request Removal</button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="7" class="empty">No students linked yet. Add a student or link to an existing one.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Add Student Form Modal -->
+  @if (showAddForm()) {
+    <div class="modal-overlay" (click)="closeAddForm()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Add Student</h2>
+          <button class="close-btn" (click)="closeAddForm()">✕</button>
+        </div>
+        <form (ngSubmit)="saveStudent()" class="modal-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Student Name <span class="req">*</span></label>
+              <input [(ngModel)]="form.name" name="name" class="form-input" required placeholder="Full name">
+            </div>
+            <div class="form-group">
+              <label>Grade <span class="req">*</span></label>
+              <input [(ngModel)]="form.grade" name="grade" class="form-input" required placeholder="e.g., 5">
+            </div>
+            <div class="form-group">
+              <label>Section</label>
+              <input [(ngModel)]="form.section" name="section" class="form-input" placeholder="e.g., A">
+            </div>
+            <div class="form-group">
+              <label>Your Relation</label>
+              <select [(ngModel)]="formRelation" name="relation" class="form-input">
+                <option value="father">Father</option>
+                <option value="mother">Mother</option>
+                <option value="guardian">Guardian</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Subjects -->
+          <div class="section-block">
+            <div class="section-header">
+              <h3>Subjects & Schedules</h3>
+              <button type="button" class="btn-sm-add" (click)="addSubject()">+ Add Subject</button>
+            </div>
+            @for (sub of formSubjects; track sub.id) {
+              <div class="subject-block">
+                <div class="subject-header">
+                  <input [(ngModel)]="sub.name" [name]="'subName'+$index" placeholder="Subject Name" class="form-input" required>
+                  <button type="button" class="btn-remove" (click)="removeSubject($index)">✕</button>
+                </div>
+                <div class="schedules">
+                  @for (sch of sub.schedules; track $index) {
+                    <div class="schedule-row">
+                      <select [(ngModel)]="sch.day" [name]="'day'+sub.id+'_'+$index" class="form-input">
+                        @for (d of days; track d) {
+                          <option [value]="d">{{ d }}</option>
+                        }
+                      </select>
+                      <input type="time" [(ngModel)]="sch.startTime" [name]="'start'+sub.id+'_'+$index" class="form-input">
+                      <input type="time" [(ngModel)]="sch.endTime" [name]="'end'+sub.id+'_'+$index" class="form-input">
+                      <button type="button" class="btn-remove" (click)="removeScheduleFromSubject(sub, $index)">✕</button>
+                    </div>
+                  }
+                  <button type="button" class="btn-sm-add small" (click)="addScheduleToSubject(sub)">+ Add Schedule</button>
+                </div>
+              </div>
+            }
+          </div>
+
+          @if (overlapError()) {
+            <div class="error-msg"><i class="bi bi-exclamation-triangle"></i> Overlapping class times detected.</div>
+          }
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" [disabled]="!form.name || !form.grade">Save Student</button>
+            <button type="button" class="btn-secondary" (click)="closeAddForm()">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Link Student Form Modal -->
+  @if (showLinkForm()) {
+    <div class="modal-overlay" (click)="closeLinkForm()">
+      <div class="modal-card modal-sm" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Link to Existing Student</h2>
+          <button class="close-btn" (click)="closeLinkForm()">✕</button>
+        </div>
+        <div class="modal-form">
+          <p class="info-text">Enter the Student ID shared by the other parent to link yourself to your child's record.</p>
+
+          <div class="form-group">
+            <label>Student ID <span class="req">*</span></label>
+            <div class="search-row">
+              <input [(ngModel)]="linkStudentId" class="form-input" placeholder="Enter Student ID">
+              <button type="button" class="btn-primary btn-sm-search" (click)="searchStudent()">
+                <i class="bi bi-search"></i> Search
+              </button>
+            </div>
+          </div>
+
+          @if (linkError()) {
+            <div class="error-msg">{{ linkError() }}</div>
+          }
+
+          @if (foundStudent()) {
+            <div class="found-student">
+              <h4><i class="bi bi-check-circle text-success"></i> Student Found</h4>
+              <div class="found-details">
+                <div><strong>Name:</strong> {{ foundStudent()!.name }}</div>
+                <div><strong>Grade:</strong> {{ foundStudent()!.grade }} {{ foundStudent()!.section }}</div>
+                <div><strong>Current Parents:</strong></div>
+                @for (u of foundStudent()!.users; track u.userId) {
+                  <div class="existing-parent">• {{ u.name }} ({{ u.relation }})</div>
+                }
+              </div>
+
+              <div class="form-group" style="margin-top: 12px;">
+                <label>Your Relation (available roles)</label>
+                <select [(ngModel)]="linkRelation" class="form-input">
+                  @for (role of availableRelations(); track role) {
+                    <option [value]="role">{{ role | titlecase }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="form-actions">
+                <button class="btn-primary" (click)="confirmLink()">
+                  <i class="bi bi-link-45deg"></i> Link Me as {{ linkRelation | titlecase }}
+                </button>
+              </div>
+            </div>
+          }
+
+          <div class="form-actions" style="margin-top: 16px;">
+            <button class="btn-secondary" (click)="closeLinkForm()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Removal Request Modal -->
+  @if (showRemovalForm()) {
+    <div class="modal-overlay" (click)="closeRemovalForm()">
+      <div class="modal-card modal-sm" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Request Student Removal</h2>
+          <button class="close-btn" (click)="closeRemovalForm()">✕</button>
+        </div>
+        <div class="modal-form">
+          <div class="warning-box">
+            <i class="bi bi-exclamation-triangle"></i>
+            <p>You are requesting removal of <strong>{{ removalStudentName }}</strong>. This requires admin approval and cannot be undone once approved.</p>
+          </div>
+
+          <div class="form-group">
+            <label>Reason for Removal <span class="req">*</span></label>
+            <textarea [(ngModel)]="removalReason" class="form-input textarea" rows="3" placeholder="Please provide a reason..."></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn-danger" (click)="submitRemoval()" [disabled]="!removalReason.trim()">
+              <i class="bi bi-send"></i> Submit Request
+            </button>
+            <button class="btn-secondary" (click)="closeRemovalForm()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

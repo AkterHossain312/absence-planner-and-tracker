@@ -82,7 +82,10 @@ export class PermissionService {
       { menuKey: 'feature-permission', label: 'Feature Permission', roles: ['superadmin', 'admin'] },
       { menuKey: 'add-system-user', label: 'Add System User', roles: ['superadmin', 'admin'] },
       { menuKey: 'absence-approval', label: 'Absence Approval', roles: ['superadmin', 'admin'] },
+      { menuKey: 'parent-approval', label: 'Parent Approvals', roles: ['superadmin', 'admin'] },
+      { menuKey: 'student-removal-approval', label: 'Student Removal', roles: ['superadmin', 'admin'] },
       { menuKey: 'calendar-days', label: 'Calendar Day Control', roles: ['superadmin', 'admin'] },
+      { menuKey: 'my-students', label: 'My Students', roles: ['user'] },
       { menuKey: 'submit-absence', label: 'Submit Absence', roles: ['user'] },
       { menuKey: 'my-submissions', label: 'My Submissions', roles: ['user'] },
       { menuKey: 'expired-submissions', label: 'Expired Submissions', roles: ['user'] },
@@ -90,7 +93,7 @@ export class PermissionService {
   }
 
   private getDefaultFeaturePermissions(): FeaturePermission[] {
-    const menus = ['holidays', 'students', 'packing-report', 'menu-permission', 'feature-permission', 'add-system-user', 'absence-approval', 'calendar-days', 'submit-absence', 'my-submissions', 'expired-submissions'];
+    const menus = ['holidays', 'students', 'packing-report', 'menu-permission', 'feature-permission', 'add-system-user', 'absence-approval', 'parent-approval', 'student-removal-approval', 'calendar-days', 'my-students', 'submit-absence', 'my-submissions', 'expired-submissions'];
     const roles: UserRole[] = ['superadmin', 'admin', 'user'];
     const perms: FeaturePermission[] = [];
     for (const menu of menus) {

@@ -1,0 +1,53 @@
+<div class="page">
+  <div class="page-header">
+    <h1>Student Removal Requests</h1>
+    <div class="filter-tabs">
+      <button [class.active]="filter() === 'all'" (click)="filter.set('all')">All</button>
+      <button [class.active]="filter() === 'pending'" (click)="filter.set('pending')">
+        Pending <span class="badge">{{ (requests() | keyvalue).length > 0 ? (requests() | slice:0:0).length : 0 }}</span>
+      </button>
+      <button [class.active]="filter() === 'approved'" (click)="filter.set('approved')">Approved</button>
+      <button [class.active]="filter() === 'rejected'" (click)="filter.set('rejected')">Rejected</button>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Student Name</th>
+          <th>Requested By</th>
+          <th>Reason</th>
+          <th>Requested On</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (req of filteredRequests(); track req.id) {
+          <tr>
+            <td><strong>{{ req.studentName }}</strong></td>
+            <td>{{ req.requestedByName }}</td>
+            <td>{{ req.reason }}</td>
+            <td>{{ req.createdAt | date:'mediumDate' }}</td>
+            <td><span class="status-badge" [class]="req.status">{{ req.status }}</span></td>
+            <td class="actions">
+              @if (req.status === 'pending') {
+                <button class="btn-sm approve" (click)="approveRemoval(req)">
+                  <i class="bi bi-check-lg"></i> Approve
+                </button>
+                <button class="btn-sm reject" (click)="rejectRemoval(req)">
+                  <i class="bi bi-x-lg"></i> Reject
+                </button>
+              } @else {
+                <span class="finalized">{{ req.status | titlecase }}</span>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="6" class="empty">No removal requests</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

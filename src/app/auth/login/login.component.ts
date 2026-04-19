@@ -51,9 +51,15 @@ export class LoginComponent {
     const user = this.auth.getUsers().find(u => u.id === this.matchedUserId);
     if (!user) return;
 
+    // Check user status before allowing login
+    const loginError = this.auth.tryLogin(user);
+    if (loginError) {
+      this.errorMsg.set(loginError);
+      return;
+    }
+
     // Simulate API delay
     setTimeout(() => {
-      this.auth.login(user);
       this.toast.success(`Welcome, ${user.name}!`);
       if (user.role === 'user') {
         this.router.navigate(['/user/dashboard']);
@@ -67,5 +73,9 @@ export class LoginComponent {
     this.otpSent.set(false);
     this.otp = '';
     this.errorMsg.set('');
+  }
+
+  goToRegister(): void {
+    this.router.navigate(['/register']);
   }
 }

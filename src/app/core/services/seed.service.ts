@@ -16,10 +16,11 @@ export class SeedService {
 
     // Seed users
     const users: User[] = [
-      { id: 'u1', name: 'Super Admin', email: 'superadmin@school.com', phone: '1111111111', location: 'New York, NY, USA', role: 'superadmin', password: '1234', createdAt: new Date().toISOString() },
-      { id: 'u2', name: 'Admin User', email: 'admin@school.com', phone: '2222222222', location: 'Los Angeles, CA, USA', role: 'admin', password: '1234', createdAt: new Date().toISOString() },
-      { id: 'u3', name: 'John Parent', email: 'john@parent.com', phone: '3333333333', location: 'Chicago, IL, USA', role: 'user', password: '1234', createdAt: new Date().toISOString() },
-      { id: 'u4', name: 'Jane Guardian', email: 'jane@parent.com', phone: '4444444444', location: 'Houston, TX, USA', role: 'user', password: '1234', createdAt: new Date().toISOString() },
+      { id: 'u1', name: 'Super Admin', email: 'superadmin@school.com', phone: '1111111111', location: 'New York, NY, USA', role: 'superadmin', password: '1234', status: 'active', emailVerified: true, createdAt: new Date().toISOString() },
+      { id: 'u2', name: 'Admin User', email: 'admin@school.com', phone: '2222222222', location: 'Los Angeles, CA, USA', role: 'admin', password: '1234', status: 'active', emailVerified: true, createdAt: new Date().toISOString() },
+      { id: 'u3', name: 'John Parent', email: 'john@parent.com', phone: '3333333333', location: 'Chicago, IL, USA', role: 'user', password: '1234', status: 'active', emailVerified: true, createdAt: new Date().toISOString() },
+      { id: 'u4', name: 'Jane Guardian', email: 'jane@parent.com', phone: '4444444444', location: 'Houston, TX, USA', role: 'user', password: '1234', status: 'active', emailVerified: true, createdAt: new Date().toISOString() },
+      { id: 'u5', name: 'Sarah Mother', email: 'sarah@parent.com', phone: '5555555555', location: 'Dallas, TX, USA', role: 'user', password: '1234', status: 'pending_approval', emailVerified: true, createdAt: new Date().toISOString() },
     ];
     this.storage.set('abs_users', users);
 

@@ -4,6 +4,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { StudentService } from '../../core/services/student.service';
 import { HolidayService } from '../../core/services/holiday.service';
 import { AbsenceService } from '../../core/services/absence.service';
+import { StudentRemovalService } from '../../core/services/student-removal.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -19,12 +20,15 @@ export class AdminDashboardComponent {
   approvedAbsences = computed(() => this.absenceService.getAll().filter(a => a.status === 'approved').length);
   rejectedAbsences = computed(() => this.absenceService.getAll().filter(a => a.status === 'rejected').length);
   totalUsers = computed(() => this.auth.getUsers().length);
+  pendingParentApprovals = computed(() => this.auth.getPendingApprovalUsers().length);
+  pendingStudentRemovals = computed(() => this.removalService.getPending().length);
   recentAbsences = computed(() => this.absenceService.getAll().slice(0, 5));
 
   constructor(
     public auth: AuthService,
     private studentService: StudentService,
     private holidayService: HolidayService,
-    private absenceService: AbsenceService
+    private absenceService: AbsenceService,
+    private removalService: StudentRemovalService
   ) {}
 }

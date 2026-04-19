@@ -45,6 +45,20 @@
             <p>System Users</p>
           </div>
         </div>
+        <div class="stat-card">
+          <div class="stat-icon amber"><i class="bi bi-person-check"></i></div>
+          <div class="stat-info">
+            <h3>{{ pendingParentApprovals() }}</h3>
+            <p>Pending Parent Approvals</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon pink"><i class="bi bi-person-x"></i></div>
+          <div class="stat-info">
+            <h3>{{ pendingStudentRemovals() }}</h3>
+            <p>Pending Student Removals</p>
+          </div>
+        </div>
       </div>
 
       <div class="recent-section">

@@ -44,6 +44,8 @@ export class AddSystemUserComponent {
       location: this.form.location,
       role: this.form.role,
       password: '1234',
+      status: 'active',
+      emailVerified: true,
       createdAt: new Date().toISOString()
     };
     setTimeout(() => {

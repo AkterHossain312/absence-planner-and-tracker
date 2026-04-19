@@ -162,6 +162,8 @@ export class StudentRecordsComponent {
           location: u.location,
           role: 'user',
           password: '1234',
+          status: 'active',
+          emailVerified: true,
           createdAt: new Date().toISOString()
         };
         this.auth.addUser(newUser);

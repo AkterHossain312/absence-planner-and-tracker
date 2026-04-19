@@ -1,0 +1,63 @@
+<div class="page">
+  <div class="page-header">
+    <h1>Parent Approvals</h1>
+    <div class="filter-tabs">
+      <button [class.active]="filter() === 'pending'" (click)="filter.set('pending')">
+        Pending <span class="badge">{{ pendingUsers().length }}</span>
+      </button>
+      <button [class.active]="filter() === 'rejected'" (click)="filter.set('rejected')">
+        Rejected <span class="badge">{{ rejectedUsers().length }}</span>
+      </button>
+      <button [class.active]="filter() === 'all'" (click)="filter.set('all')">All</button>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Location</th>
+          <th>Registered</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of filteredUsers(); track user.id) {
+          <tr>
+            <td><strong>{{ user.name }}</strong></td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.phone }}</td>
+            <td>{{ user.location || '—' }}</td>
+            <td>{{ user.createdAt | date:'mediumDate' }}</td>
+            <td>
+              <span class="status-badge" [class]="user.status">
+                {{ user.status === 'pending_approval' ? 'Pending' : 'Rejected' }}
+              </span>
+            </td>
+            <td class="actions">
+              @if (user.status === 'pending_approval') {
+                <button class="btn-sm approve" (click)="approveUser(user)">
+                  <i class="bi bi-check-lg"></i> Approve
+                </button>
+                <button class="btn-sm reject" (click)="rejectUser(user)">
+                  <i class="bi bi-x-lg"></i> Reject
+                </button>
+              }
+              @if (user.status === 'rejected') {
+                <button class="btn-sm approve" (click)="approveUser(user)">
+                  <i class="bi bi-arrow-counterclockwise"></i> Re-approve
+                </button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="7" class="empty">No parent registrations to review</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
