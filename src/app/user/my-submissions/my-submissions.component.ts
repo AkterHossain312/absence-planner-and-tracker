@@ -17,7 +17,7 @@ import { Absence } from '../../core/models/absence.model';
   styleUrl: './my-submissions.component.scss'
 })
 export class MySubmissionsComponent {
-  myAbsences = computed(() => this.absenceService.getByUserId(this.auth.currentUserId()));
+  myAbsences = computed(() => this.absenceService.getByUserId(this.auth.currentUserId(), this.auth.currentUserName()));
   editingAbsence = signal<Absence | null>(null);
   lockWarning = signal('');
   editErrors = signal<string[]>([]);

@@ -14,8 +14,8 @@ import { HolidayService } from '../../core/services/holiday.service';
   styleUrl: './user-dashboard.component.scss'
 })
 export class UserDashboardComponent {
-  myStudents = computed(() => this.studentService.getByUserId(this.auth.currentUserId()));
-  myAbsences = computed(() => this.absenceService.getByUserId(this.auth.currentUserId()));
+  myStudents = computed(() => this.studentService.getByUserId(this.auth.currentUserId(), this.auth.currentSession()?.email));
+  myAbsences = computed(() => this.absenceService.getByUserId(this.auth.currentUserId(), this.auth.currentUserName()));
   pendingCount = computed(() => this.myAbsences().filter(a => a.status === 'pending').length);
   approvedCount = computed(() => this.myAbsences().filter(a => a.status === 'approved').length);
   upcomingHolidays = computed(() => {

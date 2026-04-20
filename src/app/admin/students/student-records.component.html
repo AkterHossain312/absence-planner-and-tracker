@@ -85,7 +85,11 @@
               @for (sub of formSubjects; track sub.id) {
                 <div class="subject-block">
                   <div class="subject-header">
-                    <input [(ngModel)]="sub.name" [name]="'subName'+$index" placeholder="Subject Name" class="form-input" required>
+                    <select [(ngModel)]="sub.name" [name]="'subName'+$index" class="form-input" required>
+                      <option value="" disabled>Select Subject</option>
+                      <option value="Math">Math</option>
+                      <option value="English">English</option>
+                    </select>
                     <button type="button" class="btn-remove" (click)="removeSubject($index)">✕</button>
                   </div>
                   <div class="schedules">

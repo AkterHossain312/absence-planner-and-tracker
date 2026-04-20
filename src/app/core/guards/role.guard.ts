@@ -7,6 +7,12 @@ export function roleGuard(...allowedRoles: UserRole[]): CanActivateFn {
   return () => {
     const auth = inject(AuthService);
     const router = inject(Router);
+
+    if (!auth.ensureValidSession()) {
+      router.navigate(['/login']);
+      return false;
+    }
+
     const role = auth.currentRole();
     if (role && allowedRoles.includes(role)) {
       return true;

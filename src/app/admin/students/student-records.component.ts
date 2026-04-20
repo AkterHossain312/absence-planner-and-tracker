@@ -130,7 +130,7 @@ export class StudentRecordsComponent {
     sub.schedules.splice(scheduleIdx, 1);
   }
 
-  saveStudent(): void {
+  async saveStudent(): Promise<void> {
     // Check for overlapping schedules across all subjects
     const allSchedules = this.formSubjects.flatMap(s => s.schedules);
     if (this.studentService.hasOverlappingSchedule(allSchedules)) {
@@ -155,27 +155,31 @@ export class StudentRecordsComponent {
       });
     }
 
-    const student: Student = {
-      id: this.form.id || crypto.randomUUID(),
+    const student: Partial<Student> = {
+      ...(this.form.id ? { id: this.form.id } : {}),
       studentId: this.form.studentId || this.generateStudentId(),
       name: this.form.name!,
       grade: this.form.grade!,
       section: this.form.section || '',
+      ParentRelation: processedUsers[0]?.relation ?? null,
       users: processedUsers,
       subjects: this.formSubjects.filter(s => s.name) as Subject[],
       createdAt: this.form.createdAt || new Date().toISOString()
     };
 
-    setTimeout(async () => {
-      await this.studentService.save(student);
-      const userCount = processedUsers.length;
-      const msg = this.editing()
-        ? 'Student updated'
-        : `Student added${userCount > 0 ? ' with ' + userCount + ' parent/guardian account(s) created' : ''}`;
-      this.toast.success(msg);
-      this.loadStudents();
-      this.closeForm();
-    }, 300);
+    const result = await this.studentService.save(student);
+    if (!result.success) {
+      this.toast.error(result.error || 'Failed to save student');
+      return;
+    }
+
+    const userCount = processedUsers.length;
+    const msg = this.editing()
+      ? 'Student updated'
+      : `Student added${userCount > 0 ? ' with ' + userCount + ' parent/guardian account(s) created' : ''}`;
+    this.toast.success(msg);
+    await this.loadStudents();
+    this.closeForm();
   }
 
   async deleteStudent(id: string): Promise<void> {

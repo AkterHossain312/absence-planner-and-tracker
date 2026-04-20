@@ -27,6 +27,7 @@ export interface Student {
   name: string;
   grade: string;
   section: string;
+  ParentRelation?: RelationType | null;
   users: StudentUser[];
   subjects: Subject[];
   createdAt: string;

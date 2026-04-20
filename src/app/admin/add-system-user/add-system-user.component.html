@@ -49,6 +49,7 @@
               <th>Location</th>
               <th>Role</th>
               <th>Created</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -60,9 +61,34 @@
                 <td>{{ u.location || '—' }}</td>
                 <td><span class="role-badge" [class]="u.role">{{ u.role }}</span></td>
                 <td>{{ u.createdAt | date:'mediumDate' }}</td>
+                <td>
+                  @if (u.role === 'admin' && auth.currentRole() === 'superadmin') {
+                    <button class="btn-danger" type="button" (click)="openDeleteModal(u)">Delete</button>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
               </tr>
             }
           </tbody>
         </table>
       </div>
+
+      @if (showDeleteModal()) {
+        <div class="modal-backdrop" (click)="closeDeleteModal()">
+          <div class="confirm-modal" (click)="$event.stopPropagation()">
+            <h3>Delete Admin User</h3>
+            <p>
+              Are you sure you want to delete
+              <strong>{{ pendingDeleteUser()?.name }}</strong>?
+            </p>
+            <div class="modal-actions">
+              <button class="btn-secondary" type="button" (click)="closeDeleteModal()" [disabled]="deleting()">Cancel</button>
+              <button class="btn-danger" type="button" (click)="confirmDeleteAdminUser()" [disabled]="deleting()">
+                {{ deleting() ? 'Deleting...' : 'Delete' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     </div>

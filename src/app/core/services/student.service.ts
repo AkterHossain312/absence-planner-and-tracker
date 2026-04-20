@@ -24,8 +24,17 @@ export class StudentService {
     return this.studentsCache();
   }
 
-  getByUserId(userId: string): Student[] {
-    return this.studentsCache().filter(s => s.users.some(u => u.userId === userId));
+  getByUserId(userId: string, userEmail?: string): Student[] {
+    const normalizedUserId = this.normalize(userId);
+    const normalizedEmail = this.normalize(userEmail || '');
+
+    return this.studentsCache().filter((student) =>
+      student.users.some((user) => {
+        const sameUserId = normalizedUserId && this.normalize(user.userId) === normalizedUserId;
+        const sameEmail = normalizedEmail && this.normalize(user.email) === normalizedEmail;
+        return sameUserId || sameEmail;
+      })
+    );
   }
 
   async getById(id: string): Promise<Student | null> {
@@ -100,5 +109,9 @@ export class StudentService {
   private timeToMinutes(time: string): number {
     const [h, m] = time.split(':').map(Number);
     return h * 60 + m;
+  }
+
+  private normalize(value: string | null | undefined): string {
+    return (value || '').trim().toLowerCase();
   }
 }

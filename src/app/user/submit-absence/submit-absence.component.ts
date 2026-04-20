@@ -37,7 +37,7 @@ export class SubmitAbsenceComponent {
   startCalendarMonth = signal(new Date());
   endCalendarMonth = signal(new Date());
 
-  myStudents = computed(() => this.studentService.getByUserId(this.auth.currentUserId()));
+  myStudents = computed(() => this.studentService.getByUserId(this.auth.currentUserId(), this.auth.currentSession()?.email));
   holidays = computed(() => this.holidayService.getAll());
   selectedHoliday = computed(() => this.holidays().find(h => h.id === this.selectedHolidayId) || null);
   allowedDays = computed(() => this.permissionService.getCalendarDays().allowedDays);
@@ -86,6 +86,9 @@ export class SubmitAbsenceComponent {
     }
     this.startDate = '';
     this.endDate = '';
+    if (this.selectedHolidayId !== 'other') {
+      this.reason = '';
+    }
   }
 
   // Calendar helpers
@@ -183,7 +186,7 @@ export class SubmitAbsenceComponent {
     return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   }
 
-  submitAbsence(): void {
+  async submitAbsence(): Promise<void> {
     const errors: string[] = [];
 
     if (!this.selectedHolidayId) {
@@ -210,6 +213,8 @@ export class SubmitAbsenceComponent {
           errors.push('Return Day is not within the selected holiday period');
         }
       }
+    } else if (!this.reason.trim()) {
+      errors.push('Please provide a reason when selecting Other holiday period');
     }
 
     // Check allowed days for selected start and end dates only
@@ -230,8 +235,7 @@ export class SubmitAbsenceComponent {
     const student = this.studentService.getAll().find(s => s.id === this.selectedStudentId);
     if (!student) return;
 
-    const absence: Absence = {
-      id: crypto.randomUUID(),
+    const absence: Partial<Absence> = {
       studentId: this.selectedStudentId,
       studentName: student.name,
       userId: this.auth.currentUserId(),
@@ -249,19 +253,21 @@ export class SubmitAbsenceComponent {
       updatedAt: new Date().toISOString()
     };
 
-    setTimeout(async () => {
-      await this.absenceService.save(absence);
+    const result = await this.absenceService.save(absence);
+    if (!result.success) {
+      this.toast.error(result.error || 'Failed to submit absence');
+      return;
+    }
 
-      this.toast.success('Absence submitted successfully');
-      this.selectedHolidayId = '';
-      this.selectedStudentId = '';
-      this.startDate = '';
-      this.endDate = '';
-      this.reason = '';
-      this.homeworkLoad = '';
-      this.digitalKumon = false;
-      this.minDate = '';
-      this.maxDate = '';
-    }, 400);
+    this.toast.success('Absence submitted successfully');
+    this.selectedHolidayId = '';
+    this.selectedStudentId = '';
+    this.startDate = '';
+    this.endDate = '';
+    this.reason = '';
+    this.homeworkLoad = '';
+    this.digitalKumon = false;
+    this.minDate = '';
+    this.maxDate = '';
   }
 }

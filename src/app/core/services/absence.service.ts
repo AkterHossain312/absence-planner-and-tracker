@@ -24,8 +24,19 @@ export class AbsenceService {
     return this.absencesCache();
   }
 
-  getByUserId(userId: string): Absence[] {
-    return this.absencesCache().filter(a => a.userId === userId);
+  private normalize(value?: string | null): string {
+    return (value ?? '').trim().toLowerCase();
+  }
+
+  getByUserId(userId: string, userName?: string): Absence[] {
+    const normalizedUserId = this.normalize(userId);
+    const normalizedUserName = this.normalize(userName);
+
+    return this.absencesCache().filter(a => {
+      const matchesUserId = this.normalize(a.userId) === normalizedUserId;
+      const matchesUserName = !!normalizedUserName && this.normalize(a.userName) === normalizedUserName;
+      return matchesUserId || matchesUserName;
+    });
   }
 
   async getById(id: string): Promise<Absence | null> {

@@ -12,6 +12,7 @@ const SESSION_KEY = 'abs_session';
 export class AuthService {
   private sessionSignal = signal<Session | null>(null);
   private usersCache = signal<User[]>([]);
+  private logoutTimerId: ReturnType<typeof setTimeout> | null = null;
 
   currentSession = this.sessionSignal.asReadonly();
   isLoggedIn = computed(() => !!this.sessionSignal());
@@ -21,6 +22,13 @@ export class AuthService {
 
   constructor(private http: HttpClient, private router: Router) {
     this.restoreSession();
+  }
+
+  private clearLogoutTimer(): void {
+    if (this.logoutTimerId !== null) {
+      clearTimeout(this.logoutTimerId);
+      this.logoutTimerId = null;
+    }
   }
 
   private decodeJwtPayload(token: string): any {
@@ -48,10 +56,62 @@ export class AuthService {
     return '';
   }
 
+  private getTokenExpiryMs(token: string): number | null {
+    try {
+      const payload = this.decodeJwtPayload(token);
+      const exp = Number(payload?.exp);
+      return Number.isFinite(exp) && exp > 0 ? exp * 1000 : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private scheduleAutoLogout(token: string): void {
+    this.clearLogoutTimer();
+    const expiryMs = this.getTokenExpiryMs(token);
+    if (!expiryMs) {
+      return;
+    }
+
+    const delay = expiryMs - Date.now();
+    if (delay <= 0) {
+      this.logout();
+      return;
+    }
+
+    this.logoutTimerId = setTimeout(() => this.logout(), delay);
+  }
+
+  isTokenExpired(token: string): boolean {
+    const expiryMs = this.getTokenExpiryMs(token);
+    return expiryMs !== null && expiryMs <= Date.now();
+  }
+
+  ensureValidSession(): boolean {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) {
+      this.clearTokens();
+      return false;
+    }
+
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return false;
+    }
+
+    this.scheduleAutoLogout(token);
+    return true;
+  }
+
   private restoreSession(): void {
     const token = localStorage.getItem(TOKEN_KEY);
     if (token) {
       try {
+        if (this.isTokenExpired(token)) {
+          this.logout();
+          return;
+        }
+
         const payload = this.decodeJwtPayload(token);
         const userId = this.claimValue(payload, [
           'nameid',
@@ -82,6 +142,7 @@ export class AuthService {
         };
         this.sessionSignal.set(session);
         localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+        this.scheduleAutoLogout(token);
       } catch {
         this.clearTokens();
       }
@@ -94,6 +155,7 @@ export class AuthService {
   }
 
   private clearTokens(): void {
+    this.clearLogoutTimer();
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(SESSION_KEY);
     this.sessionSignal.set(null);
@@ -219,6 +281,19 @@ export class AuthService {
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.error?.message || err.error || 'Failed to delete user' };
+    }
+  }
+
+  async deleteAdminUser(userId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      await firstValueFrom(this.http.delete(`${environment.apiUrl}/users/${userId}/admin`));
+      await this.loadUsers();
+      return { success: true };
+    } catch (err: any) {
+      if (err?.status === 403) {
+        return { success: false, error: 'You are not authorized to delete admin users.' };
+      }
+      return { success: false, error: err.error?.message || err.error || 'Failed to delete admin user' };
     }
   }
 

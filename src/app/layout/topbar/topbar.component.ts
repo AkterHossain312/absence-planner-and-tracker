@@ -18,12 +18,10 @@ export class TopbarComponent {
   showUserMenu = signal(false);
 
   currentRole = this.auth.currentRole;
-  unreadCount = computed(() => {
-    const userId = this.auth.currentUserId();
-    return this.notificationService.getForUser(userId).filter(n => !n.read).length;
-  });
+  unreadCount = this.notificationService.unreadCount;
   userNotifications = computed(() => {
-    return this.notificationService.getForUser(this.auth.currentUserId());
+    return [...this.notificationService.notifications()]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   });
   initials = computed(() => {
     const name = this.auth.currentUserName();
@@ -34,7 +32,9 @@ export class TopbarComponent {
   constructor(
     public auth: AuthService,
     private notificationService: NotificationService
-  ) {}
+  ) {
+    this.notificationService.reload();
+  }
 
   onToggleSidebar(event: Event): void {
     event.stopPropagation();
@@ -42,7 +42,11 @@ export class TopbarComponent {
   }
 
   toggleNotifications(): void {
-    this.showNotifications.update(v => !v);
+    const willOpen = !this.showNotifications();
+    if (willOpen) {
+      this.notificationService.reload();
+    }
+    this.showNotifications.set(willOpen);
     this.showUserMenu.set(false);
   }
 

@@ -15,12 +15,15 @@ import { User, UserRole } from '../../core/models/user.model';
 export class AddSystemUserComponent {
   users = signal<User[]>([]);
   showForm = signal(false);
+  showDeleteModal = signal(false);
+  deleting = signal(false);
+  pendingDeleteUser = signal<User | null>(null);
   form: { name: string; email: string; phone: string; location: string; role: UserRole } = {
     name: '', email: '', phone: '', location: '', role: 'admin'
   };
 
   constructor(
-    private auth: AuthService,
+    public auth: AuthService,
     private toast: ToastService
   ) {
     this.loadUsers();
@@ -50,6 +53,49 @@ export class AddSystemUserComponent {
       this.showForm.set(false);
     } else {
       this.toast.error(result.error || 'Failed to create user');
+    }
+  }
+
+  openDeleteModal(user: User): void {
+    if (user.role !== 'admin') {
+      this.toast.error('Only admin users can be deleted from this screen.');
+      return;
+    }
+
+    if (this.auth.currentRole() !== 'superadmin') {
+      this.toast.error('Only superadmin can delete admin users.');
+      return;
+    }
+
+    this.pendingDeleteUser.set(user);
+    this.showDeleteModal.set(true);
+  }
+
+  closeDeleteModal(): void {
+    this.showDeleteModal.set(false);
+    this.pendingDeleteUser.set(null);
+  }
+
+  async confirmDeleteAdminUser(): Promise<void> {
+    const user = this.pendingDeleteUser();
+    if (!user) return;
+
+    if (this.auth.currentRole() !== 'superadmin') {
+      this.toast.error('Only superadmin can delete admin users.');
+      this.closeDeleteModal();
+      return;
+    }
+
+    this.deleting.set(true);
+    const result = await this.auth.deleteAdminUser(user.id);
+    this.deleting.set(false);
+
+    if (result.success) {
+      this.toast.success(`Admin user "${user.name}" deleted`);
+      await this.loadUsers();
+      this.closeDeleteModal();
+    } else {
+      this.toast.error(result.error || 'Failed to delete admin user');
     }
   }
 }

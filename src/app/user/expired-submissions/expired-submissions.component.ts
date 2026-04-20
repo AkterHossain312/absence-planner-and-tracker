@@ -22,8 +22,8 @@ interface ExpiredItem {
 export class ExpiredSubmissionsComponent {
   expiredItems = computed(() => {
     const userId = this.auth.currentUserId();
-    const students = this.studentService.getByUserId(userId);
-    const absences = this.absenceService.getByUserId(userId);
+    const students = this.studentService.getByUserId(userId, this.auth.currentSession()?.email);
+    const absences = this.absenceService.getByUserId(userId, this.auth.currentUserName());
     const holidays = this.holidayService.getAll();
     const now = new Date();
     const items: ExpiredItem[] = [];

@@ -21,7 +21,10 @@ export class MyStudentsComponent {
   days = DAYS;
   private refreshTrigger = signal(0);
 
-  myStudents = computed(() => { this.refreshTrigger(); return this.studentService.getByUserId(this.auth.currentUserId()); });
+  myStudents = computed(() => {
+    this.refreshTrigger();
+    return this.studentService.getByUserId(this.auth.currentUserId(), this.auth.currentSession()?.email);
+  });
   myRemovalRequests = computed(() => { this.refreshTrigger(); return this.removalService.getByUserId(this.auth.currentUserId()); });
 
   // Add Student form
@@ -95,7 +98,7 @@ export class MyStudentsComponent {
     sub.schedules.splice(idx, 1);
   }
 
-  saveStudent(): void {
+  async saveStudent(): Promise<void> {
     const allSchedules = this.formSubjects.flatMap(s => s.schedules);
     if (this.studentService.hasOverlappingSchedule(allSchedules)) {
       this.overlapError.set(true);
@@ -118,28 +121,32 @@ export class MyStudentsComponent {
 
     // Try to fill phone/location from user record
     const currentUser = this.auth.getUsers().find(u => u.id === session.userId);
+    debugger
     if (currentUser) {
       parentUser.phone = currentUser.phone;
       parentUser.location = currentUser.location;
     }
 
-    const student: Student = {
-      id: crypto.randomUUID(),
+    const student: Partial<Student> = {
       studentId: this.generateStudentId(),
       name: this.form.name!,
       grade: this.form.grade!,
       section: this.form.section || '',
+      ParentRelation: this.formRelation,
       users: [parentUser],
       subjects: this.formSubjects.filter(s => s.name) as Subject[],
       createdAt: new Date().toISOString()
     };
 
-    setTimeout(async () => {
-      await this.studentService.save(student);
-      this.refreshTrigger.update(v => v + 1);
-      this.toast.success(`Student "${student.name}" added successfully.`);
-      this.closeAddForm();
-    }, 300);
+    const result = await this.studentService.save(student);
+    if (!result.success) {
+      this.toast.error(result.error || 'Failed to add student.');
+      return;
+    }
+
+    this.refreshTrigger.update(v => v + 1);
+    this.toast.success(`Student "${student.name}" added successfully.`);
+    this.closeAddForm();
   }
 
   // --- Link to Existing Student ---
@@ -157,16 +164,17 @@ export class MyStudentsComponent {
     this.showLinkForm.set(false);
   }
 
-  searchStudent(): void {
+  async searchStudent(): Promise<void> {
     this.linkError.set('');
     this.foundStudent.set(null);
 
-    if (!this.linkStudentId.trim()) {
+    const studentId = this.linkStudentId.trim();
+    if (!studentId) {
       this.linkError.set('Please enter a Student ID.');
       return;
     }
 
-    const student = this.studentService.getAll().find(s => s.studentId === this.linkStudentId.trim());
+    const student = await this.studentService.getByStudentId(studentId);
     if (!student) {
       this.linkError.set('No student found with this ID.');
       return;
@@ -193,7 +201,7 @@ export class MyStudentsComponent {
     this.foundStudent.set(student);
   }
 
-  confirmLink(): void {
+  async confirmLink(): Promise<void> {
     const student = this.foundStudent();
     if (!student) return;
 
@@ -203,28 +211,15 @@ export class MyStudentsComponent {
       return;
     }
 
-    const session = this.auth.currentSession();
-    if (!session) return;
+    const result = await this.studentService.linkStudent(student.id, this.linkRelation);
+    if (!result.success) {
+      this.linkError.set(result.error || 'Failed to link student.');
+      return;
+    }
 
-    const currentUser = this.auth.getUsers().find(u => u.id === session.userId);
-
-    const parentUser: StudentUser = {
-      userId: session.userId,
-      name: session.name,
-      email: session.email,
-      phone: currentUser?.phone || '',
-      location: currentUser?.location || '',
-      relation: this.linkRelation
-    };
-
-    student.users.push(parentUser);
-
-    setTimeout(async () => {
-      await this.studentService.save(student);
-      this.refreshTrigger.update(v => v + 1);
-      this.toast.success(`You have been linked to "${student.name}" as ${this.linkRelation}.`);
-      this.closeLinkForm();
-    }, 300);
+    this.refreshTrigger.update(v => v + 1);
+    this.toast.success(`You have been linked to "${student.name}" as ${this.linkRelation}.`);
+    this.closeLinkForm();
   }
 
   // --- Request Student Removal ---

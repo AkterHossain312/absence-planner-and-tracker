@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { ToastService } from '../../core/services/toast.service';
 
 type RegistrationStep = 'form' | 'verify' | 'done';
@@ -29,6 +30,7 @@ export class RegisterComponent {
 
   constructor(
     private auth: AuthService,
+    private notificationService: NotificationService,
     private toast: ToastService,
     private router: Router
   ) {}
@@ -82,6 +84,8 @@ export class RegisterComponent {
       this.errorMsg.set(result.error || 'Verification failed. Please try again.');
       return;
     }
+
+    await this.notificationService.notifyRegistrationPending(this.registeredUserId, this.name, this.email);
 
     this.toast.success('Email verified! Your account is pending admin approval.');
     this.step.set('done');

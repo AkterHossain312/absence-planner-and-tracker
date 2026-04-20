@@ -20,6 +20,12 @@
     }
     .form-input:focus { border-color: #4A9FD8; }
     .otp-input { text-align: center; font-size: 24px; letter-spacing: 12px; font-weight: 700; }
+    .otp-input::placeholder {
+      font-size: 13px;
+      letter-spacing: 1px;
+      font-weight: 500;
+      color: #9aa0a6;
+    }
     .otp-info { text-align: center; padding: 12px; background: #f0f7fd; border-radius: 8px; }
     .otp-info p { margin: 0; }
     .otp-info small { color: #888; }

@@ -14,6 +14,10 @@ export class NotificationService {
 
   constructor(private http: HttpClient) {}
 
+  private normalize(value?: string | null): string {
+    return (value ?? '').trim().toLowerCase();
+  }
+
   async reload(): Promise<void> {
     try {
       const [notifications, countRes] = await Promise.all([
@@ -28,7 +32,15 @@ export class NotificationService {
   }
 
   getForUser(userId: string): AppNotification[] {
-    return this.notificationsSignal().filter(n => n.userId === userId || n.userId === 'all');
+    const normalizedUserId = this.normalize(userId);
+    const notifications = this.notificationsSignal();
+    const filtered = notifications.filter(n => {
+      const notificationUserId = this.normalize(n.userId);
+      return notificationUserId === normalizedUserId || notificationUserId === 'all';
+    });
+
+    // Fallback: if no match is found but API returned notifications, use API payload as-is.
+    return filtered.length > 0 ? filtered : notifications;
   }
 
   async markAsRead(id: string): Promise<void> {
@@ -46,6 +58,21 @@ export class NotificationService {
       await this.reload();
     } catch {
       // silently fail
+    }
+  }
+
+  async notifyRegistrationPending(userId: string, userName: string, userEmail: string): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.post(`${environment.apiUrl}/notifications/registration-pending`, {
+          userId,
+          userName,
+          userEmail,
+          roles: ['superadmin', 'admin']
+        })
+      );
+    } catch {
+      // Non-blocking: registration flow should not fail if notification endpoint is unavailable.
     }
   }
 }
