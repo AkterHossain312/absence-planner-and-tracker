@@ -9,12 +9,6 @@
         </div>
       </div>
       <div class="topbar-right">
-        <div class="role-switcher">
-          <button class="btn-role" [class.active]="currentRole() === 'superadmin'" (click)="switchRole('superadmin')">SuperAdmin</button>
-          <button class="btn-role" [class.active]="currentRole() === 'admin'" (click)="switchRole('admin')">Admin</button>
-          <button class="btn-role" [class.active]="currentRole() === 'user'" (click)="switchRole('user')">User</button>
-        </div>
-
         <div class="notification-wrapper" (click)="$event.stopPropagation()">
           <button class="btn-icon" (click)="toggleNotifications()">
             <i class="bi bi-bell"></i>

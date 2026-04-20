@@ -5,7 +5,6 @@ import { StudentService } from '../../core/services/student.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Student, Subject, ClassSchedule, RelationType, StudentUser } from '../../core/models/student.model';
-import { User } from '../../core/models/user.model';
 
 const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
@@ -36,8 +35,9 @@ export class StudentRecordsComponent {
     this.loadStudents();
   }
 
-  loadStudents(): void {
-    this.students.set(this.studentService.getAll());
+  async loadStudents(): Promise<void> {
+    const students = await this.studentService.loadAll();
+    this.students.set(students);
     this.loadExistingParents();
   }
 
@@ -140,40 +140,13 @@ export class StudentRecordsComponent {
     }
     this.overlapError.set(false);
 
-    // Auto-create user accounts for parents/guardians
+    // Process user entries - backend handles user account creation
     const processedUsers: StudentUser[] = [];
     for (const u of this.formUsers) {
       if (!u.name || !u.email) continue;
 
-      // Check if user already exists (by email) or create new one
-      let existingUser = this.auth.findUserByEmailOrPhone(u.email);
-      if (!existingUser && u.phone) {
-        existingUser = this.auth.findUserByEmailOrPhone(u.phone);
-      }
-
-      let userId = u.userId;
-      if (!existingUser) {
-        // Create new user account with role 'user'
-        const newUser: User = {
-          id: crypto.randomUUID(),
-          name: u.name,
-          email: u.email,
-          phone: u.phone,
-          location: u.location,
-          role: 'user',
-          password: '1234',
-          status: 'active',
-          emailVerified: true,
-          createdAt: new Date().toISOString()
-        };
-        this.auth.addUser(newUser);
-        userId = newUser.id;
-      } else {
-        userId = existingUser.id;
-      }
-
       processedUsers.push({
-        userId,
+        userId: u.userId || '',
         name: u.name,
         email: u.email,
         phone: u.phone,
@@ -193,8 +166,8 @@ export class StudentRecordsComponent {
       createdAt: this.form.createdAt || new Date().toISOString()
     };
 
-    setTimeout(() => {
-      this.studentService.save(student);
+    setTimeout(async () => {
+      await this.studentService.save(student);
       const userCount = processedUsers.length;
       const msg = this.editing()
         ? 'Student updated'
@@ -205,9 +178,9 @@ export class StudentRecordsComponent {
     }, 300);
   }
 
-  deleteStudent(id: string): void {
+  async deleteStudent(id: string): Promise<void> {
     if (confirm('Delete this student?')) {
-      this.studentService.delete(id);
+      await this.studentService.delete(id);
       this.toast.success('Student deleted');
       this.loadStudents();
     }

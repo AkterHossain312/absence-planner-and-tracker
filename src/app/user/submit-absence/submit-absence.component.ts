@@ -7,7 +7,6 @@ import { StudentService } from '../../core/services/student.service';
 import { AbsenceService } from '../../core/services/absence.service';
 import { HolidayService } from '../../core/services/holiday.service';
 import { PermissionService } from '../../core/services/permission.service';
-import { NotificationService } from '../../core/services/notification.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Student } from '../../core/models/student.model';
 import { Absence, HomeworkLoad } from '../../core/models/absence.model';
@@ -50,10 +49,19 @@ export class SubmitAbsenceComponent {
     private absenceService: AbsenceService,
     private holidayService: HolidayService,
     private permissionService: PermissionService,
-    private notificationService: NotificationService,
     private toast: ToastService,
     private route: ActivatedRoute
   ) {
+    this.loadData();
+  }
+
+  private async loadData(): Promise<void> {
+    await Promise.all([
+      this.studentService.loadAll(),
+      this.holidayService.loadAll(),
+      this.absenceService.loadAll(),
+      this.permissionService.loadCalendarDays()
+    ]);
     const holidayId = this.route.snapshot.queryParamMap.get('holidayId');
     if (holidayId) {
       this.selectedHolidayId = holidayId;
@@ -219,7 +227,7 @@ export class SubmitAbsenceComponent {
     }
     this.validationErrors.set([]);
 
-    const student = this.studentService.getById(this.selectedStudentId);
+    const student = this.studentService.getAll().find(s => s.id === this.selectedStudentId);
     if (!student) return;
 
     const absence: Absence = {
@@ -241,15 +249,8 @@ export class SubmitAbsenceComponent {
       updatedAt: new Date().toISOString()
     };
 
-    setTimeout(() => {
-      this.absenceService.save(absence);
-
-      // Notify all admins and superadmins
-      const adminUsers = this.auth.getUsers().filter(u => u.role === 'admin' || u.role === 'superadmin');
-      const msg = `New absence submitted for ${student!.name} by ${this.auth.currentUserName()} (${this.startDate} — ${this.endDate})`;
-      for (const admin of adminUsers) {
-        this.notificationService.notifyUser(admin.id, msg, 'absence_submitted');
-      }
+    setTimeout(async () => {
+      await this.absenceService.save(absence);
 
       this.toast.success('Absence submitted successfully');
       this.selectedHolidayId = '';

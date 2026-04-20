@@ -2,7 +2,6 @@ import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HolidayService } from '../../core/services/holiday.service';
-import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Holiday } from '../../core/models/holiday.model';
@@ -22,15 +21,15 @@ export class HolidayManagementComponent {
 
   constructor(
     private holidayService: HolidayService,
-    private notificationService: NotificationService,
     private auth: AuthService,
     private toast: ToastService
   ) {
     this.loadHolidays();
   }
 
-  loadHolidays(): void {
-    this.holidays.set(this.holidayService.getAll());
+  async loadHolidays(): Promise<void> {
+    const holidays = await this.holidayService.loadAll();
+    this.holidays.set(holidays);
   }
 
   openForm(): void {
@@ -50,7 +49,7 @@ export class HolidayManagementComponent {
     this.showForm.set(true);
   }
 
-  saveHoliday(): void {
+  async saveHoliday(): Promise<void> {
     const holiday: Holiday = {
       id: this.form.id || crypto.randomUUID(),
       name: this.form.name!,
@@ -62,25 +61,17 @@ export class HolidayManagementComponent {
       createdAt: this.form.createdAt || new Date().toISOString()
     };
 
-    setTimeout(() => {
-      this.holidayService.save(holiday);
-      if (!this.editing()) {
-        this.notificationService.broadcast(
-          `New holiday: ${holiday.name} (${holiday.startDate} to ${holiday.endDate})`,
-          'holiday'
-        );
-      }
-      this.toast.success(this.editing() ? 'Holiday updated' : 'Holiday created');
-      this.loadHolidays();
-      this.closeForm();
-    }, 300);
+    await this.holidayService.save(holiday);
+    this.toast.success(this.editing() ? 'Holiday updated' : 'Holiday created');
+    await this.loadHolidays();
+    this.closeForm();
   }
 
-  deleteHoliday(id: string): void {
+  async deleteHoliday(id: string): Promise<void> {
     if (confirm('Delete this holiday?')) {
-      this.holidayService.delete(id);
+      await this.holidayService.delete(id);
       this.toast.success('Holiday deleted');
-      this.loadHolidays();
+      await this.loadHolidays();
     }
   }
 }

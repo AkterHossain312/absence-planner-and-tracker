@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { StudentService } from '../../core/services/student.service';
 import { AuthService } from '../../core/services/auth.service';
 import { StudentRemovalService } from '../../core/services/student-removal.service';
-import { NotificationService } from '../../core/services/notification.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Student, Subject, ClassSchedule, RelationType, StudentUser } from '../../core/models/student.model';
 import { StudentRemovalRequest } from '../../core/models/student-removal.model';
@@ -50,9 +49,17 @@ export class MyStudentsComponent {
     private studentService: StudentService,
     private auth: AuthService,
     private removalService: StudentRemovalService,
-    private notificationService: NotificationService,
     private toast: ToastService
-  ) {}
+  ) {
+    this.loadData();
+  }
+
+  private async loadData(): Promise<void> {
+    await Promise.all([
+      this.studentService.loadAll(),
+      this.removalService.loadAll()
+    ]);
+  }
 
   // --- Add Student ---
 
@@ -127,8 +134,8 @@ export class MyStudentsComponent {
       createdAt: new Date().toISOString()
     };
 
-    setTimeout(() => {
-      this.studentService.save(student);
+    setTimeout(async () => {
+      await this.studentService.save(student);
       this.refreshTrigger.update(v => v + 1);
       this.toast.success(`Student "${student.name}" added successfully.`);
       this.closeAddForm();
@@ -212,8 +219,8 @@ export class MyStudentsComponent {
 
     student.users.push(parentUser);
 
-    setTimeout(() => {
-      this.studentService.save(student);
+    setTimeout(async () => {
+      await this.studentService.save(student);
       this.refreshTrigger.update(v => v + 1);
       this.toast.success(`You have been linked to "${student.name}" as ${this.linkRelation}.`);
       this.closeLinkForm();
@@ -258,18 +265,8 @@ export class MyStudentsComponent {
       updatedAt: new Date().toISOString()
     };
 
-    setTimeout(() => {
-      this.removalService.save(request);
-
-      // Notify admins
-      const admins = this.auth.getUsers().filter(u => u.role === 'superadmin' || u.role === 'admin');
-      for (const admin of admins) {
-        this.notificationService.notifyUser(
-          admin.id,
-          `${this.auth.currentUserName()} requested removal of student "${this.removalStudentName}".`,
-          'student_removal_pending'
-        );
-      }
+    setTimeout(async () => {
+      await this.removalService.save(request);
 
       this.toast.success('Removal request submitted. Awaiting admin approval.');
       this.refreshTrigger.update(v => v + 1);

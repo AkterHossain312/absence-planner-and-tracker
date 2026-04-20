@@ -29,7 +29,17 @@ export class UserDashboardComponent {
     private absenceService: AbsenceService,
     private holidayService: HolidayService,
     private router: Router
-  ) {}
+  ) {
+    this.loadData();
+  }
+
+  private async loadData(): Promise<void> {
+    await Promise.all([
+      this.studentService.loadAll(),
+      this.absenceService.loadAll(),
+      this.holidayService.loadAll()
+    ]);
+  }
 
   submitAbsencePlan(holidayId: string): void {
     this.router.navigate(['/user/submit-absence'], { queryParams: { holidayId } });

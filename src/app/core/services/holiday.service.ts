@@ -1,40 +1,64 @@
-import { Injectable } from '@angular/core';
-import { StorageService } from './storage.service';
+import { Injectable, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Holiday } from '../models/holiday.model';
-
-const HOLIDAYS_KEY = 'abs_holidays';
+import { environment } from '../../../environments/environment';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class HolidayService {
-  constructor(private storage: StorageService) {}
+  private holidaysCache = signal<Holiday[]>([]);
+
+  constructor(private http: HttpClient) {}
+
+  async loadAll(): Promise<Holiday[]> {
+    try {
+      const holidays = await firstValueFrom(this.http.get<Holiday[]>(`${environment.apiUrl}/holidays`));
+      this.holidaysCache.set(holidays);
+      return holidays;
+    } catch {
+      return [];
+    }
+  }
 
   getAll(): Holiday[] {
-    return this.storage.get<Holiday[]>(HOLIDAYS_KEY) ?? [];
+    return this.holidaysCache();
   }
 
-  getById(id: string): Holiday | undefined {
-    return this.getAll().find(h => h.id === id);
-  }
-
-  save(holiday: Holiday): void {
-    const holidays = this.getAll();
-    const idx = holidays.findIndex(h => h.id === holiday.id);
-    if (idx >= 0) {
-      holidays[idx] = holiday;
-    } else {
-      holidays.push(holiday);
+  async getById(id: string): Promise<Holiday | null> {
+    try {
+      return await firstValueFrom(this.http.get<Holiday>(`${environment.apiUrl}/holidays/${id}`));
+    } catch {
+      return null;
     }
-    this.storage.set(HOLIDAYS_KEY, holidays);
   }
 
-  delete(id: string): void {
-    const holidays = this.getAll().filter(h => h.id !== id);
-    this.storage.set(HOLIDAYS_KEY, holidays);
+  async save(holiday: Partial<Holiday>): Promise<{ success: boolean; error?: string }> {
+    try {
+      if (holiday.id) {
+        await firstValueFrom(this.http.put(`${environment.apiUrl}/holidays/${holiday.id}`, holiday));
+      } else {
+        await firstValueFrom(this.http.post(`${environment.apiUrl}/holidays`, holiday));
+      }
+      await this.loadAll();
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.error?.message || err.error || 'Failed to save holiday' };
+    }
   }
 
+  async delete(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      await firstValueFrom(this.http.delete(`${environment.apiUrl}/holidays/${id}`));
+      await this.loadAll();
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.error?.message || err.error || 'Failed to delete holiday' };
+    }
+  }
+
+  // Client-side helpers using cached data
   isDateInHoliday(date: Date): boolean {
-    const holidays = this.getAll();
-    return holidays.some(h => {
+    return this.holidaysCache().some(h => {
       const start = new Date(h.startDate);
       const end = new Date(h.endDate);
       start.setHours(0, 0, 0, 0);
@@ -44,7 +68,7 @@ export class HolidayService {
   }
 
   getHolidayForDate(date: Date): Holiday | undefined {
-    return this.getAll().find(h => {
+    return this.holidaysCache().find(h => {
       const start = new Date(h.startDate);
       const end = new Date(h.endDate);
       start.setHours(0, 0, 0, 0);

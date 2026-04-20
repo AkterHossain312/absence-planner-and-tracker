@@ -23,7 +23,12 @@ export class MenuPermissionComponent {
     private auth: AuthService,
     private toast: ToastService
   ) {
-    this.permissions.set(this.permissionService.getMenuPermissions());
+    this.loadData();
+  }
+
+  private async loadData(): Promise<void> {
+    const perms = await this.permissionService.loadMenuPermissions();
+    this.permissions.set(perms);
   }
 
   hasRole(perm: MenuPermission, role: UserRole): boolean {
@@ -43,8 +48,12 @@ export class MenuPermissionComponent {
     this.permissions.set([...perms]);
   }
 
-  savePermissions(): void {
-    this.permissionService.saveMenuPermissions(this.permissions());
-    this.toast.success('Menu permissions saved');
+  async savePermissions(): Promise<void> {
+    const result = await this.permissionService.saveMenuPermissions(this.permissions());
+    if (result.success) {
+      this.toast.success('Menu permissions saved');
+    } else {
+      this.toast.error(result.error || 'Failed to save menu permissions');
+    }
   }
 }

@@ -1,7 +1,6 @@
 import { Component, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AbsenceService } from '../../core/services/absence.service';
-import { NotificationService } from '../../core/services/notification.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Absence, AbsenceStatus } from '../../core/models/absence.model';
 
@@ -24,23 +23,26 @@ export class AbsenceApprovalComponent {
 
   constructor(
     private absenceService: AbsenceService,
-    private notificationService: NotificationService,
     private toast: ToastService
   ) {
     this.loadAbsences();
   }
 
-  loadAbsences(): void {
-    this.absences.set(this.absenceService.getAll());
+  async loadAbsences(): Promise<void> {
+    const absences = await this.absenceService.loadAll();
+    this.absences.set(absences);
   }
 
-  updateStatus(absence: Absence, status: AbsenceStatus): void {
-    setTimeout(() => {
-      this.absenceService.updateStatus(absence.id, status);
-      const msg = `Absence for ${absence.studentName} has been ${status}`;
-      this.notificationService.notifyUser(absence.userId, msg, status === 'approved' ? 'absence_approved' : 'absence_rejected');
-      this.toast.success(msg);
-      this.loadAbsences();
-    }, 300);
+  async updateStatus(absence: Absence, status: AbsenceStatus): Promise<void> {
+    if (status === 'approved') {
+      await this.absenceService.approveAbsence(absence.id);
+    } else if (status === 'rejected') {
+      await this.absenceService.rejectAbsence(absence.id);
+    } else {
+      await this.absenceService.updateStatus(absence.id, status);
+    }
+    const msg = `Absence for ${absence.studentName} has been ${status}`;
+    this.toast.success(msg);
+    await this.loadAbsences();
   }
 }

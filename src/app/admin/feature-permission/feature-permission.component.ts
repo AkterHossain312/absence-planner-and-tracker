@@ -26,7 +26,11 @@ export class FeaturePermissionComponent {
     private auth: AuthService,
     private toast: ToastService
   ) {
-    this.allPermissions = this.permissionService.getFeaturePermissions();
+    this.loadData();
+  }
+
+  private async loadData(): Promise<void> {
+    this.allPermissions = await this.permissionService.loadFeaturePermissions();
     this.applyFilter();
   }
 
@@ -35,8 +39,12 @@ export class FeaturePermissionComponent {
     this.filteredPermissions.set(this.allPermissions.filter(p => p.role === this.selectedRole));
   }
 
-  savePermissions(): void {
-    this.permissionService.saveFeaturePermissions(this.allPermissions);
-    this.toast.success('Feature permissions saved');
+  async savePermissions(): Promise<void> {
+    const result = await this.permissionService.saveFeaturePermissions(this.allPermissions);
+    if (result.success) {
+      this.toast.success('Feature permissions saved');
+    } else {
+      this.toast.error(result.error || 'Failed to save feature permissions');
+    }
   }
 }

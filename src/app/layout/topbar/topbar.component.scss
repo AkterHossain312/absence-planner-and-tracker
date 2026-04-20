@@ -11,12 +11,6 @@
     .logo-img { height: 36px; width: auto; object-fit: contain; }
     .logo-text { font-size: 18px; font-weight: 700; letter-spacing: .5px; }
     .topbar-right { display: flex; align-items: center; gap: 12px; }
-    .role-switcher { display: flex; gap: 4px; }
-    .btn-role {
-      padding: 4px 10px; border: 1px solid rgba(255,255,255,.4); border-radius: 4px;
-      background: transparent; color: #fff; cursor: pointer; font-size: 12px; transition: all .2s;
-    }
-    .btn-role:hover, .btn-role.active { background: rgba(255,255,255,.25); border-color: #fff; }
     .notification-wrapper { position: relative; }
     .btn-icon { background: none; border: none; cursor: pointer; position: relative; padding: 6px; color: #fff; font-size: 20px; }
     .notif-type .bi { font-size: 18px; }
@@ -72,11 +66,7 @@
     .dropdown-item:hover { background: #f8f9fa; }
     @media (max-width: 768px) {
       .hamburger { display: flex; }
-      .role-switcher { display: none; }
       .user-name { display: none; }
       .logo-text { display: none; }
       .notification-panel { width: 280px; right: -50px; }
-    }
-    @media (min-width: 769px) and (max-width: 1024px) {
-      .role-switcher .btn-role { font-size: 11px; padding: 3px 6px; }
     }

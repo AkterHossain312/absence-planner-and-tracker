@@ -1,76 +1,51 @@
 import { Injectable, signal, computed } from '@angular/core';
-import { StorageService } from './storage.service';
+import { HttpClient } from '@angular/common/http';
 import { AppNotification } from '../models/notification.model';
-
-const NOTIFICATIONS_KEY = 'abs_notifications';
+import { environment } from '../../../environments/environment';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
   private notificationsSignal = signal<AppNotification[]>([]);
+  private unreadCountSignal = signal<number>(0);
 
   notifications = this.notificationsSignal.asReadonly();
-  unreadCount = computed(() => this.notificationsSignal().filter(n => !n.read).length);
+  unreadCount = this.unreadCountSignal.asReadonly();
 
-  constructor(private storage: StorageService) {
-    this.reload();
-  }
+  constructor(private http: HttpClient) {}
 
-  reload(): void {
-    const all = this.storage.get<AppNotification[]>(NOTIFICATIONS_KEY) ?? [];
-    this.notificationsSignal.set(all);
+  async reload(): Promise<void> {
+    try {
+      const [notifications, countRes] = await Promise.all([
+        firstValueFrom(this.http.get<AppNotification[]>(`${environment.apiUrl}/notifications`)),
+        firstValueFrom(this.http.get<{ count: number }>(`${environment.apiUrl}/notifications/unread-count`))
+      ]);
+      this.notificationsSignal.set(notifications);
+      this.unreadCountSignal.set(countRes.count);
+    } catch {
+      // silently fail
+    }
   }
 
   getForUser(userId: string): AppNotification[] {
     return this.notificationsSignal().filter(n => n.userId === userId || n.userId === 'all');
   }
 
-  add(notification: AppNotification): void {
-    const all = this.storage.get<AppNotification[]>(NOTIFICATIONS_KEY) ?? [];
-    all.unshift(notification);
-    this.storage.set(NOTIFICATIONS_KEY, all);
-    this.notificationsSignal.set(all);
-  }
-
-  markAsRead(id: string): void {
-    const all = this.storage.get<AppNotification[]>(NOTIFICATIONS_KEY) ?? [];
-    const n = all.find(x => x.id === id);
-    if (n) {
-      n.read = true;
-      this.storage.set(NOTIFICATIONS_KEY, all);
-      this.notificationsSignal.set([...all]);
+  async markAsRead(id: string): Promise<void> {
+    try {
+      await firstValueFrom(this.http.post(`${environment.apiUrl}/notifications/${id}/read`, {}));
+      await this.reload();
+    } catch {
+      // silently fail
     }
   }
 
-  markAllRead(userId: string): void {
-    const all = this.storage.get<AppNotification[]>(NOTIFICATIONS_KEY) ?? [];
-    all.forEach(n => {
-      if (n.userId === userId || n.userId === 'all') {
-        n.read = true;
-      }
-    });
-    this.storage.set(NOTIFICATIONS_KEY, all);
-    this.notificationsSignal.set([...all]);
-  }
-
-  broadcast(message: string, type: AppNotification['type']): void {
-    this.add({
-      id: crypto.randomUUID(),
-      userId: 'all',
-      message,
-      type,
-      read: false,
-      createdAt: new Date().toISOString()
-    });
-  }
-
-  notifyUser(userId: string, message: string, type: AppNotification['type']): void {
-    this.add({
-      id: crypto.randomUUID(),
-      userId,
-      message,
-      type,
-      read: false,
-      createdAt: new Date().toISOString()
-    });
+  async markAllRead(): Promise<void> {
+    try {
+      await firstValueFrom(this.http.post(`${environment.apiUrl}/notifications/mark-all-read`, {}));
+      await this.reload();
+    } catch {
+      // silently fail
+    }
   }
 }

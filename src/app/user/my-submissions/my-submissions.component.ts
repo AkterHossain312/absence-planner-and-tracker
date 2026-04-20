@@ -33,17 +33,22 @@ export class MySubmissionsComponent {
     private permissionService: PermissionService,
     private studentService: StudentService,
     private toast: ToastService
-  ) {}
+  ) {
+    this.loadData();
+  }
 
-  startEdit(absence: Absence): void {
-    const lockStatus = this.absenceService.isLocked(absence.id, this.auth.currentUserId());
-    if (lockStatus.locked) {
-      this.lockWarning.set(`This record is being edited by another user (${lockStatus.lockedBy}). Your changes may be overwritten.`);
-    } else {
-      this.lockWarning.set('');
-    }
+  private async loadData(): Promise<void> {
+    await Promise.all([
+      this.absenceService.loadAll(),
+      this.holidayService.loadAll(),
+      this.studentService.loadAll(),
+      this.permissionService.loadCalendarDays()
+    ]);
+  }
 
-    this.absenceService.acquireLock(absence.id, this.auth.currentUserId());
+  async startEdit(absence: Absence): Promise<void> {
+    await this.absenceService.lockAbsence(absence.id);
+    this.lockWarning.set('');
     this.editingAbsence.set(absence);
     this.editStartDate = absence.startDate;
     this.editEndDate = absence.endDate;
@@ -51,16 +56,16 @@ export class MySubmissionsComponent {
     this.editErrors.set([]);
   }
 
-  cancelEdit(): void {
+  async cancelEdit(): Promise<void> {
     const current = this.editingAbsence();
     if (current) {
-      this.absenceService.releaseLock(current.id);
+      await this.absenceService.unlockAbsence(current.id);
     }
     this.editingAbsence.set(null);
     this.lockWarning.set('');
   }
 
-  saveEdit(): void {
+  async saveEdit(): Promise<void> {
     const errors: string[] = [];
     const start = new Date(this.editStartDate);
     const end = new Date(this.editEndDate);
@@ -96,11 +101,9 @@ export class MySubmissionsComponent {
     absence.reason = this.editReason;
     absence.updatedAt = new Date().toISOString();
 
-    setTimeout(() => {
-      this.absenceService.save(absence);
-      this.absenceService.releaseLock(absence.id);
-      this.editingAbsence.set(null);
-      this.toast.success('Absence updated');
-    }, 300);
+    await this.absenceService.save(absence);
+    await this.absenceService.unlockAbsence(absence.id);
+    this.editingAbsence.set(null);
+    this.toast.success('Absence updated');
   }
 }

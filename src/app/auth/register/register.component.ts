@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
-import { NotificationService } from '../../core/services/notification.service';
 import { ToastService } from '../../core/services/toast.service';
 
 type RegistrationStep = 'form' | 'verify' | 'done';
@@ -18,6 +17,7 @@ type RegistrationStep = 'form' | 'verify' | 'done';
 export class RegisterComponent {
   step = signal<RegistrationStep>('form');
   errorMsg = signal('');
+  loading = signal(false);
 
   name = '';
   email = '';
@@ -29,12 +29,11 @@ export class RegisterComponent {
 
   constructor(
     private auth: AuthService,
-    private notificationService: NotificationService,
     private toast: ToastService,
     private router: Router
   ) {}
 
-  submitRegistration(): void {
+  async submitRegistration(): Promise<void> {
     this.errorMsg.set('');
 
     if (!this.name || !this.email || !this.phone) {
@@ -48,12 +47,14 @@ export class RegisterComponent {
       return;
     }
 
-    const result = this.auth.register({
+    this.loading.set(true);
+    const result = await this.auth.register({
       name: this.name,
       email: this.email,
       phone: this.phone,
       location: this.location
     });
+    this.loading.set(false);
 
     if (!result.success) {
       this.errorMsg.set(result.error!);
@@ -65,7 +66,7 @@ export class RegisterComponent {
     this.step.set('verify');
   }
 
-  verifyEmail(): void {
+  async verifyEmail(): Promise<void> {
     this.errorMsg.set('');
 
     if (!this.verificationCode || this.verificationCode.length !== 6 || !/^\d{6}$/.test(this.verificationCode)) {
@@ -73,20 +74,13 @@ export class RegisterComponent {
       return;
     }
 
-    const verified = this.auth.verifyEmail(this.registeredUserId);
-    if (!verified) {
-      this.errorMsg.set('Verification failed. Please try again.');
-      return;
-    }
+    this.loading.set(true);
+    const result = await this.auth.verifyEmail(this.registeredUserId, this.verificationCode);
+    this.loading.set(false);
 
-    // Notify admins about the new registration
-    const admins = this.auth.getUsers().filter(u => u.role === 'superadmin' || u.role === 'admin');
-    for (const admin of admins) {
-      this.notificationService.notifyUser(
-        admin.id,
-        `New parent registration: ${this.name} (${this.email}) is pending approval.`,
-        'registration_pending'
-      );
+    if (!result.success) {
+      this.errorMsg.set(result.error || 'Verification failed. Please try again.');
+      return;
     }
 
     this.toast.success('Email verified! Your account is pending admin approval.');

@@ -1,50 +1,105 @@
-import { Injectable } from '@angular/core';
-import { StorageService } from './storage.service';
+import { Injectable, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { MenuPermission, FeaturePermission, CalendarDayConfig } from '../models/permission.model';
 import { UserRole } from '../models/user.model';
-
-const MENU_PERMS_KEY = 'abs_menu_permissions';
-const FEATURE_PERMS_KEY = 'abs_feature_permissions';
-const CALENDAR_DAYS_KEY = 'abs_calendar_days';
+import { environment } from '../../../environments/environment';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class PermissionService {
-  constructor(private storage: StorageService) {}
+  private menuPermsCache = signal<MenuPermission[]>([]);
+  private featurePermsCache = signal<FeaturePermission[]>([]);
+  private calendarDaysCache = signal<CalendarDayConfig>({ allowedDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] });
+
+  constructor(private http: HttpClient) {}
 
   // Menu Permissions
+  async loadMenuPermissions(): Promise<MenuPermission[]> {
+    try {
+      const perms = await firstValueFrom(this.http.get<MenuPermission[]>(`${environment.apiUrl}/permissions/menu`));
+      this.menuPermsCache.set(perms);
+      return perms;
+    } catch {
+      return this.getDefaultMenuPermissions();
+    }
+  }
+
   getMenuPermissions(): MenuPermission[] {
-    const saved = this.storage.get<MenuPermission[]>(MENU_PERMS_KEY);
-    if (!saved) return this.getDefaultMenuPermissions();
-    const defaults = this.getDefaultMenuPermissions();
-    const savedKeys = new Set(saved.map(p => p.menuKey));
-    const missing = defaults.filter(d => !savedKeys.has(d.menuKey));
-    return [...saved, ...missing];
+    const cached = this.menuPermsCache();
+    return cached.length > 0 ? cached : this.getDefaultMenuPermissions();
   }
 
-  saveMenuPermissions(perms: MenuPermission[]): void {
-    this.storage.set(MENU_PERMS_KEY, perms);
+  async saveMenuPermissions(perms: MenuPermission[]): Promise<{ success: boolean; error?: string }> {
+    try {
+      await firstValueFrom(this.http.put(`${environment.apiUrl}/permissions/menu`, perms));
+      this.menuPermsCache.set(perms);
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.error?.message || 'Failed to save menu permissions' };
+    }
   }
 
-  isMenuVisible(menuKey: string, role: UserRole): boolean {
+  async isMenuVisible(menuKey: string, role: UserRole): Promise<boolean> {
+    try {
+      const res: any = await firstValueFrom(
+        this.http.get(`${environment.apiUrl}/permissions/check-menu?menuKey=${menuKey}&role=${role}`)
+      );
+      return res.allowed === true;
+    } catch {
+      // Fallback to cached data
+      const perms = this.getMenuPermissions();
+      const perm = perms.find(p => p.menuKey === menuKey);
+      return perm ? perm.roles.includes(role) : false;
+    }
+  }
+
+  isMenuVisibleSync(menuKey: string, role: UserRole): boolean {
     const perms = this.getMenuPermissions();
     const perm = perms.find(p => p.menuKey === menuKey);
     return perm ? perm.roles.includes(role) : false;
   }
 
   // Feature Permissions
-  getFeaturePermissions(): FeaturePermission[] {
-    return this.storage.get<FeaturePermission[]>(FEATURE_PERMS_KEY) ?? this.getDefaultFeaturePermissions();
+  async loadFeaturePermissions(): Promise<FeaturePermission[]> {
+    try {
+      const perms = await firstValueFrom(this.http.get<FeaturePermission[]>(`${environment.apiUrl}/permissions/features`));
+      this.featurePermsCache.set(perms);
+      return perms;
+    } catch {
+      return [];
+    }
   }
 
-  saveFeaturePermissions(perms: FeaturePermission[]): void {
-    this.storage.set(FEATURE_PERMS_KEY, perms);
+  getFeaturePermissions(): FeaturePermission[] {
+    return this.featurePermsCache();
+  }
+
+  async saveFeaturePermissions(perms: FeaturePermission[]): Promise<{ success: boolean; error?: string }> {
+    try {
+      await firstValueFrom(this.http.put(`${environment.apiUrl}/permissions/features`, perms));
+      this.featurePermsCache.set(perms);
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.error?.message || 'Failed to save feature permissions' };
+    }
   }
 
   getFeaturePermission(menuKey: string, role: UserRole): FeaturePermission | undefined {
-    return this.getFeaturePermissions().find(p => p.menuKey === menuKey && p.role === role);
+    return this.featurePermsCache().find(p => p.menuKey === menuKey && p.role === role);
   }
 
-  canPerformAction(menuKey: string, role: UserRole, action: 'add' | 'edit' | 'delete' | 'view'): boolean {
+  async canPerformAction(menuKey: string, role: UserRole, action: 'add' | 'edit' | 'delete' | 'view'): Promise<boolean> {
+    try {
+      const res: any = await firstValueFrom(
+        this.http.get(`${environment.apiUrl}/permissions/check-feature?menuKey=${menuKey}&role=${role}&action=${action}`)
+      );
+      return res.allowed === true;
+    } catch {
+      return this.canPerformActionSync(menuKey, role, action);
+    }
+  }
+
+  canPerformActionSync(menuKey: string, role: UserRole, action: 'add' | 'edit' | 'delete' | 'view'): boolean {
     const perm = this.getFeaturePermission(menuKey, role);
     if (!perm) return role === 'superadmin';
     switch (action) {
@@ -56,20 +111,34 @@ export class PermissionService {
   }
 
   // Calendar Day Control
-  getCalendarDays(): CalendarDayConfig {
-    return this.storage.get<CalendarDayConfig>(CALENDAR_DAYS_KEY) ?? {
-      allowedDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-    };
+  async loadCalendarDays(): Promise<CalendarDayConfig> {
+    try {
+      const config = await firstValueFrom(this.http.get<CalendarDayConfig>(`${environment.apiUrl}/permissions/calendar-days`));
+      this.calendarDaysCache.set(config);
+      return config;
+    } catch {
+      return this.calendarDaysCache();
+    }
   }
 
-  saveCalendarDays(config: CalendarDayConfig): void {
-    this.storage.set(CALENDAR_DAYS_KEY, config);
+  getCalendarDays(): CalendarDayConfig {
+    return this.calendarDaysCache();
+  }
+
+  async saveCalendarDays(config: CalendarDayConfig): Promise<{ success: boolean; error?: string }> {
+    try {
+      await firstValueFrom(this.http.put(`${environment.apiUrl}/permissions/calendar-days`, config));
+      this.calendarDaysCache.set(config);
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.error?.message || 'Failed to save calendar days' };
+    }
   }
 
   isDayAllowed(date: Date): boolean {
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayName = dayNames[date.getDay()];
-    return this.getCalendarDays().allowedDays.includes(dayName);
+    return this.calendarDaysCache().allowedDays.includes(dayName);
   }
 
   private getDefaultMenuPermissions(): MenuPermission[] {
@@ -77,37 +146,18 @@ export class PermissionService {
       { menuKey: 'dashboard', label: 'Dashboard', roles: ['superadmin', 'admin', 'user'] },
       { menuKey: 'holidays', label: 'Holiday Periods', roles: ['superadmin', 'admin'] },
       { menuKey: 'students', label: 'Student Records', roles: ['superadmin', 'admin'] },
-      { menuKey: 'packing-report', label: 'Daily Packing Report', roles: ['superadmin', 'admin'] },
-      { menuKey: 'menu-permission', label: 'Menu Permission', roles: ['superadmin', 'admin'] },
-      { menuKey: 'feature-permission', label: 'Feature Permission', roles: ['superadmin', 'admin'] },
-      { menuKey: 'add-system-user', label: 'Add System User', roles: ['superadmin', 'admin'] },
-      { menuKey: 'absence-approval', label: 'Absence Approval', roles: ['superadmin', 'admin'] },
-      { menuKey: 'parent-approval', label: 'Parent Approvals', roles: ['superadmin', 'admin'] },
-      { menuKey: 'student-removal-approval', label: 'Student Removal', roles: ['superadmin', 'admin'] },
-      { menuKey: 'calendar-days', label: 'Calendar Day Control', roles: ['superadmin', 'admin'] },
+      { menuKey: 'packing_report', label: 'Daily Packing Report', roles: ['superadmin', 'admin'] },
+      { menuKey: 'menu_permission', label: 'Menu Permission', roles: ['superadmin', 'admin'] },
+      { menuKey: 'feature_permission', label: 'Feature Permission', roles: ['superadmin', 'admin'] },
+      { menuKey: 'system_user', label: 'Add System User', roles: ['superadmin', 'admin'] },
+      { menuKey: 'absences', label: 'Absence Approval', roles: ['superadmin', 'admin'] },
+      { menuKey: 'users', label: 'Parent Approvals', roles: ['superadmin', 'admin'] },
+      { menuKey: 'student_removal', label: 'Student Removal', roles: ['superadmin', 'admin'] },
+      { menuKey: 'calendar_control', label: 'Calendar Day Control', roles: ['superadmin', 'admin'] },
       { menuKey: 'my-students', label: 'My Students', roles: ['user'] },
       { menuKey: 'submit-absence', label: 'Submit Absence', roles: ['user'] },
       { menuKey: 'my-submissions', label: 'My Submissions', roles: ['user'] },
       { menuKey: 'expired-submissions', label: 'Expired Submissions', roles: ['user'] },
     ];
-  }
-
-  private getDefaultFeaturePermissions(): FeaturePermission[] {
-    const menus = ['holidays', 'students', 'packing-report', 'menu-permission', 'feature-permission', 'add-system-user', 'absence-approval', 'parent-approval', 'student-removal-approval', 'calendar-days', 'my-students', 'submit-absence', 'my-submissions', 'expired-submissions'];
-    const roles: UserRole[] = ['superadmin', 'admin', 'user'];
-    const perms: FeaturePermission[] = [];
-    for (const menu of menus) {
-      for (const role of roles) {
-        perms.push({
-          menuKey: menu,
-          role,
-          canAdd: role !== 'user',
-          canEdit: role !== 'user',
-          canDelete: role === 'superadmin',
-          canView: true,
-        });
-      }
-    }
-    return perms;
   }
 }

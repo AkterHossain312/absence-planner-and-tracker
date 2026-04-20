@@ -21,7 +21,12 @@ export class CalendarDaysComponent {
     private permissionService: PermissionService,
     private toast: ToastService
   ) {
-    this.enabledDays.set(this.permissionService.getCalendarDays().allowedDays);
+    this.loadData();
+  }
+
+  private async loadData(): Promise<void> {
+    const config = await this.permissionService.loadCalendarDays();
+    this.enabledDays.set(config.allowedDays);
   }
 
   isDayEnabled(day: string): boolean {
@@ -34,8 +39,12 @@ export class CalendarDaysComponent {
     );
   }
 
-  save(): void {
-    this.permissionService.saveCalendarDays({ allowedDays: this.enabledDays() });
-    this.toast.success('Calendar day configuration saved');
+  async save(): Promise<void> {
+    const result = await this.permissionService.saveCalendarDays({ allowedDays: this.enabledDays() });
+    if (result.success) {
+      this.toast.success('Calendar day configuration saved');
+    } else {
+      this.toast.error(result.error || 'Failed to save calendar days');
+    }
   }
 }

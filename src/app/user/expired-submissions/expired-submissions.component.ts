@@ -54,5 +54,15 @@ export class ExpiredSubmissionsComponent {
     private holidayService: HolidayService,
     private absenceService: AbsenceService,
     private studentService: StudentService
-  ) {}
+  ) {
+    this.loadData();
+  }
+
+  private async loadData(): Promise<void> {
+    await Promise.all([
+      this.holidayService.loadAll(),
+      this.absenceService.loadAll(),
+      this.studentService.loadAll()
+    ]);
+  }
 }

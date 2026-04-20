@@ -17,7 +17,7 @@ export class LoginComponent {
   otp = '';
   otpSent = signal(false);
   errorMsg = signal('');
-  private matchedUserId = '';
+  loading = signal(false);
 
   constructor(
     private auth: AuthService,
@@ -30,43 +30,41 @@ export class LoginComponent {
     this.sendOtp();
   }
 
-  sendOtp(): void {
+  async sendOtp(): Promise<void> {
     this.errorMsg.set('');
-    const user = this.auth.findUserByEmailOrPhone(this.identifier);
-    if (!user) {
-      this.errorMsg.set('No account found with this email/phone');
+    this.loading.set(true);
+    const result = await this.auth.sendLoginOtp(this.identifier);
+    this.loading.set(false);
+    if (!result.success) {
+      this.errorMsg.set(result.error || 'Failed to send OTP');
       return;
     }
-    this.matchedUserId = user.id;
     this.otpSent.set(true);
-    this.toast.info('OTP sent! Enter any 4-digit code.');
+    this.toast.info('OTP sent! Check your email.');
   }
 
-  verifyOtp(): void {
+  async verifyOtp(): Promise<void> {
     this.errorMsg.set('');
-    if (!this.auth.verifyOtp(this.otp)) {
-      this.errorMsg.set('Please enter a valid 4-digit code');
-      return;
-    }
-    const user = this.auth.getUsers().find(u => u.id === this.matchedUserId);
-    if (!user) return;
-
-    // Check user status before allowing login
-    const loginError = this.auth.tryLogin(user);
-    if (loginError) {
-      this.errorMsg.set(loginError);
+    if (!this.otp || this.otp.length < 6) {
+      this.errorMsg.set('Please enter a valid code');
       return;
     }
 
-    // Simulate API delay
-    setTimeout(() => {
-      this.toast.success(`Welcome, ${user.name}!`);
-      if (user.role === 'user') {
-        this.router.navigate(['/user/dashboard']);
-      } else {
-        this.router.navigate(['/admin/dashboard']);
-      }
-    }, 500);
+    this.loading.set(true);
+    const result = await this.auth.verifyLoginOtp(this.identifier, this.otp);
+    this.loading.set(false);
+
+    if (!result.success) {
+      this.errorMsg.set(result.error || 'Login failed');
+      return;
+    }
+
+    this.toast.success('Welcome!');
+    if (result.role === 'user') {
+      this.router.navigate(['/user/dashboard']);
+    } else {
+      this.router.navigate(['/admin/dashboard']);
+    }
   }
 
   goBack(): void {

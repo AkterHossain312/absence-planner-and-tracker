@@ -1,7 +1,6 @@
 import { Component, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
-import { NotificationService } from '../../core/services/notification.service';
 import { ToastService } from '../../core/services/toast.service';
 import { User } from '../../core/models/user.model';
 
@@ -26,42 +25,31 @@ export class ParentApprovalComponent {
 
   constructor(
     private auth: AuthService,
-    private notificationService: NotificationService,
     private toast: ToastService
   ) {
     this.loadUsers();
   }
 
-  loadUsers(): void {
-    this.pendingUsers.set(this.auth.getPendingApprovalUsers());
-    this.rejectedUsers.set(this.auth.getRejectedUsers());
+  async loadUsers(): Promise<void> {
+    const [pending, rejected] = await Promise.all([
+      this.auth.getPendingApprovalUsers(),
+      this.auth.getRejectedUsers()
+    ]);
+    this.pendingUsers.set(pending);
+    this.rejectedUsers.set(rejected);
   }
 
-  approveUser(user: User): void {
-    setTimeout(() => {
-      this.auth.approveUser(user.id);
-      this.notificationService.notifyUser(
-        user.id,
-        'Your account has been approved! You can now log in.',
-        'registration_approved'
-      );
-      this.toast.success(`Parent "${user.name}" has been approved.`);
-      this.loadUsers();
-    }, 300);
+  async approveUser(user: User): Promise<void> {
+    await this.auth.approveUser(user.id);
+    this.toast.success(`Parent "${user.name}" has been approved.`);
+    await this.loadUsers();
   }
 
-  rejectUser(user: User): void {
+  async rejectUser(user: User): Promise<void> {
     if (confirm(`Reject registration for "${user.name}"?`)) {
-      setTimeout(() => {
-        this.auth.rejectUser(user.id);
-        this.notificationService.notifyUser(
-          user.id,
-          'Your account registration has been rejected. Please contact admin for details.',
-          'registration_rejected'
-        );
-        this.toast.success(`Parent "${user.name}" has been rejected.`);
-        this.loadUsers();
-      }, 300);
+      await this.auth.rejectUser(user.id);
+      this.toast.success(`Parent "${user.name}" has been rejected.`);
+      await this.loadUsers();
     }
   }
 }

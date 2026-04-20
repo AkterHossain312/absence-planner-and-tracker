@@ -1,39 +1,83 @@
-import { Injectable } from '@angular/core';
-import { StorageService } from './storage.service';
+import { Injectable, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Student } from '../models/student.model';
-
-const STUDENTS_KEY = 'abs_students';
+import { environment } from '../../../environments/environment';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class StudentService {
-  constructor(private storage: StorageService) {}
+  private studentsCache = signal<Student[]>([]);
 
-  getAll(): Student[] {
-    return this.storage.get<Student[]>(STUDENTS_KEY) ?? [];
+  constructor(private http: HttpClient) {}
+
+  async loadAll(): Promise<Student[]> {
+    try {
+      const students = await firstValueFrom(this.http.get<Student[]>(`${environment.apiUrl}/students`));
+      this.studentsCache.set(students);
+      return students;
+    } catch {
+      return [];
+    }
   }
 
-  getById(id: string): Student | undefined {
-    return this.getAll().find(s => s.id === id);
+  getAll(): Student[] {
+    return this.studentsCache();
   }
 
   getByUserId(userId: string): Student[] {
-    return this.getAll().filter(s => s.users.some(u => u.userId === userId));
+    return this.studentsCache().filter(s => s.users.some(u => u.userId === userId));
   }
 
-  save(student: Student): void {
-    const students = this.getAll();
-    const idx = students.findIndex(s => s.id === student.id);
-    if (idx >= 0) {
-      students[idx] = student;
-    } else {
-      students.push(student);
+  async getById(id: string): Promise<Student | null> {
+    try {
+      return await firstValueFrom(this.http.get<Student>(`${environment.apiUrl}/students/${id}`));
+    } catch {
+      return null;
     }
-    this.storage.set(STUDENTS_KEY, students);
   }
 
-  delete(id: string): void {
-    const students = this.getAll().filter(s => s.id !== id);
-    this.storage.set(STUDENTS_KEY, students);
+  async getByStudentId(studentId: string): Promise<Student | null> {
+    try {
+      return await firstValueFrom(this.http.get<Student>(`${environment.apiUrl}/students/by-student-id/${studentId}`));
+    } catch {
+      return null;
+    }
+  }
+
+  async save(student: Partial<Student>): Promise<{ success: boolean; error?: string; data?: Student }> {
+    try {
+      if (student.id) {
+        const updated = await firstValueFrom(this.http.put<Student>(`${environment.apiUrl}/students/${student.id}`, student));
+        await this.loadAll();
+        return { success: true, data: updated };
+      } else {
+        const created = await firstValueFrom(this.http.post<Student>(`${environment.apiUrl}/students`, student));
+        await this.loadAll();
+        return { success: true, data: created };
+      }
+    } catch (err: any) {
+      return { success: false, error: err.error?.message || err.error || 'Failed to save student' };
+    }
+  }
+
+  async delete(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      await firstValueFrom(this.http.delete(`${environment.apiUrl}/students/${id}`));
+      await this.loadAll();
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.error?.message || err.error || 'Failed to delete student' };
+    }
+  }
+
+  async linkStudent(studentId: string, relation: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      await firstValueFrom(this.http.post(`${environment.apiUrl}/students/${studentId}/link`, { relation }));
+      await this.loadAll();
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.error?.message || err.error || 'Failed to link student' };
+    }
   }
 
   hasOverlappingSchedule(schedules: { day: string; startTime: string; endTime: string }[]): boolean {

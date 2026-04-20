@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
-import { UserRole } from '../../core/models/user.model';
 
 @Component({
   selector: 'app-topbar',
@@ -57,13 +56,7 @@ export class TopbarComponent {
   }
 
   markAllRead(): void {
-    this.notificationService.markAllRead(this.auth.currentUserId());
-  }
-
-  switchRole(role: UserRole): void {
-    this.auth.switchRole(role);
-    this.showUserMenu.set(false);
-    this.showNotifications.set(false);
+    this.notificationService.markAllRead();
   }
 
   logout(): void {

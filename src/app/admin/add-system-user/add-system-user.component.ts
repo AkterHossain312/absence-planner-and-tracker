@@ -26,8 +26,9 @@ export class AddSystemUserComponent {
     this.loadUsers();
   }
 
-  loadUsers(): void {
-    this.users.set(this.auth.getUsers());
+  async loadUsers(): Promise<void> {
+    const users = await this.auth.loadUsers();
+    this.users.set(users);
   }
 
   openForm(): void {
@@ -35,24 +36,20 @@ export class AddSystemUserComponent {
     this.showForm.set(true);
   }
 
-  createUser(): void {
-    const user: User = {
-      id: crypto.randomUUID(),
+  async createUser(): Promise<void> {
+    const result = await this.auth.addUser({
       name: this.form.name,
       email: this.form.email,
       phone: this.form.phone,
       location: this.form.location,
-      role: this.form.role,
-      password: '1234',
-      status: 'active',
-      emailVerified: true,
-      createdAt: new Date().toISOString()
-    };
-    setTimeout(() => {
-      this.auth.addUser(user);
-      this.toast.success(`User "${user.name}" created`);
-      this.loadUsers();
+      role: this.form.role
+    });
+    if (result.success) {
+      this.toast.success(`User "${this.form.name}" created`);
+      await this.loadUsers();
       this.showForm.set(false);
-    }, 300);
+    } else {
+      this.toast.error(result.error || 'Failed to create user');
+    }
   }
 }

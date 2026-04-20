@@ -1,83 +1,118 @@
-import { Injectable } from '@angular/core';
-import { StorageService } from './storage.service';
+import { Injectable, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Absence, AbsenceStatus } from '../models/absence.model';
-
-const ABSENCES_KEY = 'abs_absences';
-const LOCK_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+import { environment } from '../../../environments/environment';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class AbsenceService {
-  constructor(private storage: StorageService) {}
+  private absencesCache = signal<Absence[]>([]);
+
+  constructor(private http: HttpClient) {}
+
+  async loadAll(): Promise<Absence[]> {
+    try {
+      const absences = await firstValueFrom(this.http.get<Absence[]>(`${environment.apiUrl}/absences`));
+      this.absencesCache.set(absences);
+      return absences;
+    } catch {
+      return [];
+    }
+  }
 
   getAll(): Absence[] {
-    return this.storage.get<Absence[]>(ABSENCES_KEY) ?? [];
+    return this.absencesCache();
   }
 
   getByUserId(userId: string): Absence[] {
-    return this.getAll().filter(a => a.userId === userId);
+    return this.absencesCache().filter(a => a.userId === userId);
   }
 
-  getById(id: string): Absence | undefined {
-    return this.getAll().find(a => a.id === id);
-  }
-
-  save(absence: Absence): void {
-    const absences = this.getAll();
-    const idx = absences.findIndex(a => a.id === absence.id);
-    if (idx >= 0) {
-      absences[idx] = absence;
-    } else {
-      absences.push(absence);
-    }
-    this.storage.set(ABSENCES_KEY, absences);
-  }
-
-  delete(id: string): void {
-    const absences = this.getAll().filter(a => a.id !== id);
-    this.storage.set(ABSENCES_KEY, absences);
-  }
-
-  updateStatus(id: string, status: AbsenceStatus): void {
-    const absence = this.getById(id);
-    if (absence) {
-      absence.status = status;
-      absence.updatedAt = new Date().toISOString();
-      this.save(absence);
+  async getById(id: string): Promise<Absence | null> {
+    try {
+      return await firstValueFrom(this.http.get<Absence>(`${environment.apiUrl}/absences/${id}`));
+    } catch {
+      return null;
     }
   }
 
-  acquireLock(absenceId: string, userId: string): boolean {
-    const absence = this.getById(absenceId);
-    if (!absence) return false;
-
-    if (absence.lockedBy && absence.lockedBy !== userId) {
-      const lockedAt = new Date(absence.lockedAt!).getTime();
-      if (Date.now() - lockedAt < LOCK_TIMEOUT) {
-        return false;
+  async save(absence: Partial<Absence>): Promise<{ success: boolean; error?: string; data?: Absence }> {
+    try {
+      if (absence.id) {
+        const updated = await firstValueFrom(this.http.put<Absence>(`${environment.apiUrl}/absences/${absence.id}`, absence));
+        await this.loadAll();
+        return { success: true, data: updated };
+      } else {
+        const created = await firstValueFrom(this.http.post<Absence>(`${environment.apiUrl}/absences`, absence));
+        await this.loadAll();
+        return { success: true, data: created };
       }
-    }
-
-    absence.lockedBy = userId;
-    absence.lockedAt = new Date().toISOString();
-    this.save(absence);
-    return true;
-  }
-
-  releaseLock(absenceId: string): void {
-    const absence = this.getById(absenceId);
-    if (absence) {
-      absence.lockedBy = null;
-      absence.lockedAt = null;
-      this.save(absence);
+    } catch (err: any) {
+      return { success: false, error: err.error?.message || err.error || 'Failed to save absence' };
     }
   }
 
-  isLocked(absenceId: string, currentUserId: string): { locked: boolean; lockedBy: string | null } {
-    const absence = this.getById(absenceId);
-    if (!absence || !absence.lockedBy) return { locked: false, lockedBy: null };
-    if (absence.lockedBy === currentUserId) return { locked: false, lockedBy: null };
-    const lockedAt = new Date(absence.lockedAt!).getTime();
-    if (Date.now() - lockedAt >= LOCK_TIMEOUT) return { locked: false, lockedBy: null };
-    return { locked: true, lockedBy: absence.lockedBy };
+  async updateStatus(id: string, status: AbsenceStatus): Promise<boolean> {
+    try {
+      await firstValueFrom(this.http.put(`${environment.apiUrl}/absences/${id}`, { status }));
+      await this.loadAll();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async lockAbsence(id: string): Promise<boolean> {
+    try {
+      await firstValueFrom(this.http.post(`${environment.apiUrl}/absences/${id}/lock`, {}));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async unlockAbsence(id: string): Promise<boolean> {
+    try {
+      await firstValueFrom(this.http.post(`${environment.apiUrl}/absences/${id}/unlock`, {}));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async approveAbsence(id: string): Promise<boolean> {
+    try {
+      await firstValueFrom(this.http.post(`${environment.apiUrl}/absences/${id}/approve`, {}));
+      await this.loadAll();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async rejectAbsence(id: string): Promise<boolean> {
+    try {
+      await firstValueFrom(this.http.post(`${environment.apiUrl}/absences/${id}/reject`, {}));
+      await this.loadAll();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async getExpired(): Promise<Absence[]> {
+    try {
+      return await firstValueFrom(this.http.get<Absence[]>(`${environment.apiUrl}/absences/expired`));
+    } catch {
+      return [];
+    }
+  }
+
+  async getPending(): Promise<Absence[]> {
+    try {
+      return await firstValueFrom(this.http.get<Absence[]>(`${environment.apiUrl}/absences?status=pending`));
+    } catch {
+      return [];
+    }
   }
 }
