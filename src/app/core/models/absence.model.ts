@@ -8,7 +8,7 @@ export interface Absence {
   studentName: string;
   userId: string;
   userName: string;
-  holidayId: string;
+  holidayId: string | null;
   startDate: string;
   endDate: string;
   reason: string;

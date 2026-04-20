@@ -10,6 +10,7 @@
               @for (h of holidays(); track h.id) {
                 <option [value]="h.id">{{ h.name }} ({{ h.startDate | date:'mediumDate' }} — {{ h.endDate | date:'mediumDate' }})</option>
               }
+              <option value="other">Other (Custom Dates)</option>
             </select>
           </div>
 
@@ -24,6 +25,11 @@
           </div>
 
           @if (selectedHolidayId) {
+            @if (selectedHolidayId === 'other') {
+              <div class="info-banner">
+                <i class="bi bi-info-circle"></i> You are submitting for a custom date range not tied to any holiday period.
+              </div>
+            }
             <div class="form-group">
               <label>Last Attendance Day</label>
               <div class="calendar-picker">

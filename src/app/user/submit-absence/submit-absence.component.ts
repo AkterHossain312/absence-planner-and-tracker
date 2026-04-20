@@ -71,6 +71,10 @@ export class SubmitAbsenceComponent {
     } else {
       this.minDate = '';
       this.maxDate = '';
+      if (this.selectedHolidayId === 'other') {
+        this.startCalendarMonth.set(new Date());
+        this.endCalendarMonth.set(new Date());
+      }
     }
     this.startDate = '';
     this.endDate = '';
@@ -175,7 +179,7 @@ export class SubmitAbsenceComponent {
     const errors: string[] = [];
 
     if (!this.selectedHolidayId) {
-      errors.push('Please select a holiday period');
+      errors.push('Please select a holiday period or "Other" for custom dates');
     }
 
     // Validate dates are within selected holiday range
@@ -186,15 +190,17 @@ export class SubmitAbsenceComponent {
       errors.push('Last Attendance Day must be before Return Day');
     }
 
-    const holiday = this.holidays().find(h => h.id === this.selectedHolidayId);
-    if (holiday) {
-      const hStart = new Date(holiday.startDate);
-      const hEnd = new Date(holiday.endDate);
-      if (start < hStart || start > hEnd) {
-        errors.push('Last Attendance Day is not within the selected holiday period');
-      }
-      if (end < hStart || end > hEnd) {
-        errors.push('Return Day is not within the selected holiday period');
+    if (this.selectedHolidayId !== 'other') {
+      const holiday = this.holidays().find(h => h.id === this.selectedHolidayId);
+      if (holiday) {
+        const hStart = new Date(holiday.startDate);
+        const hEnd = new Date(holiday.endDate);
+        if (start < hStart || start > hEnd) {
+          errors.push('Last Attendance Day is not within the selected holiday period');
+        }
+        if (end < hStart || end > hEnd) {
+          errors.push('Return Day is not within the selected holiday period');
+        }
       }
     }
 
@@ -222,7 +228,7 @@ export class SubmitAbsenceComponent {
       studentName: student.name,
       userId: this.auth.currentUserId(),
       userName: this.auth.currentUserName(),
-      holidayId: this.selectedHolidayId,
+      holidayId: this.selectedHolidayId === 'other' ? null : this.selectedHolidayId,
       startDate: this.startDate,
       endDate: this.endDate,
       reason: this.reason,
